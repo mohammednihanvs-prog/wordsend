@@ -113,10 +113,10 @@ io.on('connection', (socket) => {
   });
 
   // 5. Submit Word
-  socket.on('submit_word', ({ code, word }, callback) => {
+  socket.on('submit_word', async ({ code, word }, callback) => {
     const room = rooms.get(code);
     if (!room) return;
-    const result = room.submitWord(socket.id, word);
+    const result = await room.submitWord(socket.id, word);
     if (typeof callback === 'function') callback(result);
   });
 

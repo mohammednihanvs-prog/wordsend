@@ -213,7 +213,7 @@ class Room {
   /**
    * Submits a word attempt on active player's turn
    */
-  submitWord(socketId, word) {
+  async submitWord(socketId, word) {
     if (this.status !== 'playing') {
       return { success: false, reason: 'Game is not currently active.' };
     }
@@ -229,7 +229,7 @@ class Room {
     const player = this.players.get(socketId);
     if (!player) return { success: false, reason: 'Player not found.' };
 
-    const validation = validateWord(word, this.baseWord, this.usedWords);
+    const validation = await validateWord(word, this.baseWord, this.usedWords);
 
     if (validation.valid) {
       // Correct compound word

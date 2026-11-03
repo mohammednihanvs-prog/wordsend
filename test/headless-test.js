@@ -59,9 +59,9 @@ async function runTestSuite() {
       if (room) cb(room.startGame(socket.id));
     });
 
-    socket.on('submit_word', ({ code, word }, cb) => {
+    socket.on('submit_word', async ({ code, word }, cb) => {
       const room = rooms.get(code);
-      if (room) cb(room.submitWord(socket.id, word));
+      if (room) cb(await room.submitWord(socket.id, word));
     });
 
     socket.on('skip_turn', ({ code }, cb) => {
