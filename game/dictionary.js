@@ -1,35 +1,31 @@
 // Fast In-Memory Offline English Dictionary & Word Chain Validator
 const rawWords = require('an-array-of-english-words');
 const config = require('../config');
+const { KNOWN_COMPOUNDS } = require('./compounds');
 
 // Load words into a Set for O(1) lookups
 const dictionarySet = new Set(rawWords.map(w => w.toLowerCase()));
 
 // Supplemental common compound words/collocations to make play smooth
-const extraCompounds = [
-  'basecamp', 'icecream', 'creditcard', 'highscore', 'playground',
-  'superstar', 'hotdog', 'pancake', 'raincoat', 'notebook',
-  'sunflower', 'popcorn', 'jellyfish', 'teacup', 'cupcake'
-];
-for (const word of extraCompounds) {
+const compoundSet = new Set(KNOWN_COMPOUNDS.map(w => w.toLowerCase()));
+for (const word of compoundSet) {
   dictionarySet.add(word);
 }
 
 /**
- * Validates a submitted word against game rules and the current base word.
+ * Validates a submitted word against game rules and the current base word for compound word chaining.
  *
  * @param {string} rawInput - The user submitted word
  * @param {string} baseWord - The active base word to chain from
  * @param {Set<string>} usedWords - Words already played in the current game
- * @param {string} chainMode - 'compound' | 'shiritori' | 'any'
- * @returns {{ valid: boolean, reason?: string, cleanWord: string, compoundForm?: string }}
+ * @returns {{ valid: boolean, reason?: string, cleanWord: string, compoundForm?: string, compoundWord?: string }}
  */
-function validateWord(rawInput, baseWord, usedWords, chainMode = config.RULES.DEFAULT_CHAIN_MODE) {
+function validateWord(rawInput, baseWord, usedWords) {
   if (!rawInput || typeof rawInput !== 'string') {
     return { valid: false, reason: 'Please enter a word.', cleanWord: '' };
   }
 
-  // Clean input: lowercase and remove any stray punctuation/spaces from mobile keyboards
+  // Clean input: lowercase and remove any stray punctuation/spaces
   const clean = rawInput.trim().toLowerCase().replace(/[^a-z]/g, '');
   const base = (baseWord || '').trim().toLowerCase().replace(/[^a-z]/g, '');
 
@@ -52,71 +48,84 @@ function validateWord(rawInput, baseWord, usedWords, chainMode = config.RULES.DE
     return { valid: false, reason: `"${clean}" was already played in this game!`, cleanWord: clean };
   }
 
-  // 4. Must exist in English dictionary
-  if (!dictionarySet.has(clean)) {
-    return { valid: false, reason: `"${clean}" is not in the dictionary!`, cleanWord: clean };
-  }
-
-  // 6. Chain Mode Rules
-  if (chainMode === 'compound' && base) {
-    const forwardCompound = base + clean;   // e.g. base + ball = baseball
-    const backwardCompound = clean + base;  // e.g. air + base = airbase
-
-    if (dictionarySet.has(forwardCompound)) {
+  // 4. Compound Word Verification
+  if (base) {
+    // Check A: Forward compound: base + clean (e.g. base + ball = baseball)
+    const forward = base + clean;
+    if ((dictionarySet.has(forward) || compoundSet.has(forward)) && (!usedWords || !usedWords.has(forward))) {
       return {
         valid: true,
         cleanWord: clean,
-        compoundForm: `${base} + ${clean} = ${forwardCompound}`
+        compoundWord: forward,
+        compoundForm: `${base} + ${clean} = ${forward}`
       };
     }
 
-    if (dictionarySet.has(backwardCompound)) {
+    // Check B: Backward compound: clean + base (e.g. foot + ball = football)
+    const backward = clean + base;
+    if ((dictionarySet.has(backward) || compoundSet.has(backward)) && (!usedWords || !usedWords.has(backward))) {
       return {
         valid: true,
         cleanWord: clean,
-        compoundForm: `${clean} + ${base} = ${backwardCompound}`
+        compoundWord: backward,
+        compoundForm: `${clean} + ${base} = ${backward}`
       };
     }
 
-    // Check if player entered the compound word itself (e.g. "baseball" when base is "base")
+    // Check C: Did player enter the full compound word itself?
+    // e.g. base is "base", player typed "baseball" -> extracted suffix is "ball"
     if (clean.startsWith(base) && clean.length > base.length) {
       const suffix = clean.slice(base.length);
-      if (dictionarySet.has(suffix)) {
-        return {
-          valid: true,
-          cleanWord: suffix,
-          compoundForm: `${base} + ${suffix} = ${clean}`
-        };
+      if (suffix.length >= config.RULES.MIN_WORD_LENGTH) {
+        const fullWord = clean;
+        if ((dictionarySet.has(fullWord) || compoundSet.has(fullWord) || dictionarySet.has(suffix)) &&
+            (!usedWords || (!usedWords.has(suffix) && !usedWords.has(fullWord)))) {
+          return {
+            valid: true,
+            cleanWord: suffix,
+            compoundWord: fullWord,
+            compoundForm: `${base} + ${suffix} = ${fullWord}`
+          };
+        }
       }
     }
+
+    // e.g. base is "ball", player typed "football" -> extracted prefix is "foot"
     if (clean.endsWith(base) && clean.length > base.length) {
       const prefix = clean.slice(0, clean.length - base.length);
-      if (dictionarySet.has(prefix)) {
-        return {
-          valid: true,
-          cleanWord: prefix,
-          compoundForm: `${prefix} + ${base} = ${clean}`
-        };
+      if (prefix.length >= config.RULES.MIN_WORD_LENGTH) {
+        const fullWord = clean;
+        if ((dictionarySet.has(fullWord) || compoundSet.has(fullWord) || dictionarySet.has(prefix)) &&
+            (!usedWords || (!usedWords.has(prefix) && !usedWords.has(fullWord)))) {
+          return {
+            valid: true,
+            cleanWord: prefix,
+            compoundWord: fullWord,
+            compoundForm: `${prefix} + ${base} = ${fullWord}`
+          };
+        }
       }
+    }
+
+    // Check if the word itself is in the dictionary or not
+    if (!dictionarySet.has(clean)) {
+      return {
+        valid: false,
+        reason: `"${clean}" is not in the dictionary.`,
+        cleanWord: clean
+      };
     }
 
     return {
       valid: false,
-      reason: `"${clean}" does not form a compound word with "${baseWord}"!`,
+      reason: `"${clean}" does not form a compound word with "${baseWord}".`,
       cleanWord: clean
     };
   }
 
-  if (chainMode === 'shiritori' && base) {
-    const lastChar = base.slice(-1);
-    const firstChar = clean[0];
-    if (firstChar !== lastChar) {
-      return {
-        valid: false,
-        reason: `Word must start with "${lastChar.toUpperCase()}" (the last letter of "${baseWord}")!`,
-        cleanWord: clean
-      };
-    }
+  // Fallback if no base word yet
+  if (!dictionarySet.has(clean)) {
+    return { valid: false, reason: `"${clean}" is not in the dictionary!`, cleanWord: clean };
   }
 
   return { valid: true, cleanWord: clean };
@@ -136,5 +145,6 @@ function getRandomStartingWord(excludeWords = new Set()) {
 module.exports = {
   validateWord,
   getRandomStartingWord,
-  dictionarySet
+  dictionarySet,
+  compoundSet
 };

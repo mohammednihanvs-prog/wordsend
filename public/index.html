@@ -91,16 +91,14 @@
                 <input type="range" id="slider-turn-timer" class="slider-chunky" min="5" max="30" value="10">
               </div>
 
-              <!-- Chain Mode -->
-              <div class="setting-item">
-                <div class="setting-header">
-                  <span>Word Chain Mode</span>
+              <!-- Game Mode Info -->
+              <div class="setting-item" style="background: #f1f9df; border: 1px solid #dcedad; border-radius: 14px; padding: 12px 14px;">
+                <div style="font-weight: 700; color: #4d6e1b; font-size: 0.9rem; margin-bottom: 3px;">
+                  🧩 Game Mode: Compound Word Chain
                 </div>
-                <select id="select-chain-mode" class="select-chunky">
-                  <option value="any">Free Word Chain (Any valid English word)</option>
-                  <option value="compound">Compound Words (e.g. base ➔ ball = baseball)</option>
-                  <option value="shiritori">First/Last Letter (e.g. base ➔ elephant)</option>
-                </select>
+                <div style="font-size: 0.8rem; color: #56645b;">
+                  Join with the base word (e.g. <em>base</em> ➔ <em>ball</em> = <strong>baseball</strong>, or <em>foot</em> ➔ <em>football</em>).
+                </div>
               </div>
 
               <div id="lobby-non-host-notice" style="display: none; font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
@@ -206,21 +204,60 @@
             </div>
           </div>
 
-          <!-- Sidebar (Scoreboard & Word History) -->
+          <!-- Sidebar: Scoreboard & Used Words Tabs -->
           <div class="game-sidebar">
-            <!-- Scoreboard -->
-            <div class="scoreboard-box">
-              <h4 class="section-title" style="margin-bottom: 8px;">🏆 Leaderboard</h4>
-              <div id="scoreboard-rows" class="scoreboard-rows">
-                <!-- Dynamically populated -->
+            <!-- Tab Navigation Header -->
+            <div class="sidebar-tabs-nav">
+              <button id="tab-btn-scores" class="sidebar-tab-btn active" type="button">
+                🏆 Scores
+              </button>
+              <button id="tab-btn-used-words" class="sidebar-tab-btn" type="button">
+                📚 Used Words <span id="used-words-badge" class="tab-badge">0</span>
+              </button>
+            </div>
+
+            <!-- Tab 1: Leaderboard -->
+            <div id="tab-content-scores" class="sidebar-tab-content active">
+              <div class="scoreboard-box">
+                <div class="box-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <h4 class="section-title" style="margin: 0;">🏆 Live Standings</h4>
+                  <span id="target-score-hint" style="font-size: 0.75rem; color: var(--muted); font-weight: 600;">Goal: 10 pts</span>
+                </div>
+                <div id="scoreboard-rows" class="scoreboard-rows">
+                  <!-- Dynamically populated -->
+                </div>
               </div>
             </div>
 
-            <!-- Word Feed / Chain History -->
-            <div class="history-box">
-              <h4 class="section-title" style="margin-bottom: 8px;">📜 Word History</h4>
-              <div id="history-feed" class="history-feed">
-                <!-- Dynamically populated -->
+            <!-- Tab 2: Used Words Panel -->
+            <div id="tab-content-used-words" class="sidebar-tab-content" style="display: none;">
+              <div class="history-box used-words-panel">
+                <div class="used-words-header" style="margin-bottom: 12px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                    <h4 class="section-title" style="margin: 0;">📚 Used Words</h4>
+                    <span id="used-words-summary" style="font-size: 0.75rem; font-weight: 700; color: #36ab79;">0 used</span>
+                  </div>
+                  <!-- Search / Filter input -->
+                  <div class="used-words-search-wrap">
+                    <input type="text" id="input-search-used-words" class="input-used-search" placeholder="🔍 Search used words..." autocomplete="off">
+                  </div>
+                </div>
+
+                <!-- Chips container showing every word used in this match -->
+                <div class="used-words-chips-section">
+                  <div class="used-chips-label">ALREADY PLAYED (CANNOT REPEAT):</div>
+                  <div id="used-words-chips" class="used-words-chips-grid">
+                    <span class="no-words-hint">No words played yet</span>
+                  </div>
+                </div>
+
+                <!-- Detailed turn chain history -->
+                <div class="used-chain-section" style="margin-top: 14px;">
+                  <div class="used-chips-label">CHAIN HISTORY:</div>
+                  <div id="history-feed" class="history-feed">
+                    <!-- Dynamically populated -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>

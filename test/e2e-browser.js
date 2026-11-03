@@ -151,7 +151,9 @@ async function runTest() {
 
     // Let's find a valid compound word for currentBase
     const rawWords = require('an-array-of-english-words');
+    const { KNOWN_COMPOUNDS } = require('../game/compounds');
     const set = new Set(rawWords);
+    for (const c of KNOWN_COMPOUNDS) set.add(c);
     let validWord = '';
     for (const w of set) {
       if (w.length >= 2 && w !== currentBase) {

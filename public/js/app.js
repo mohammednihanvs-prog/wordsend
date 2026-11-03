@@ -31,11 +31,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const labelWinningScore = document.getElementById('label-winning-score');
   const sliderTurnTimer = document.getElementById('slider-turn-timer');
   const labelTurnTimer = document.getElementById('label-turn-timer');
-  const selectChainMode = document.getElementById('select-chain-mode');
   const lobbyNonHostNotice = document.getElementById('lobby-non-host-notice');
   const btnStartGame = document.getElementById('btn-start-game');
   const lobbyStartHint = document.getElementById('lobby-start-hint');
   const btnMuteLobby = document.getElementById('btn-mute-toggle-lobby');
+
+  // DOM Elements - Sidebar Tabs & Used Words
+  const tabBtnScores = document.getElementById('tab-btn-scores');
+  const tabBtnUsedWords = document.getElementById('tab-btn-used-words');
+  const tabContentScores = document.getElementById('tab-content-scores');
+  const tabContentUsedWords = document.getElementById('tab-content-used-words');
+  const usedWordsBadge = document.getElementById('used-words-badge');
+  const usedWordsSummary = document.getElementById('used-words-summary');
+  const inputSearchUsedWords = document.getElementById('input-search-used-words');
+  const usedWordsChips = document.getElementById('used-words-chips');
+  const targetScoreHint = document.getElementById('target-score-hint');
 
   // DOM Elements - Game
   const gameRoomCode = document.getElementById('game-room-code');
@@ -184,8 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!currentRoomCode || !isHost()) return;
     const settings = {
       winningScore: parseInt(sliderWinningScore.value, 10),
-      turnTimer: parseInt(sliderTurnTimer.value, 10),
-      chainMode: selectChainMode.value
+      turnTimer: parseInt(sliderTurnTimer.value, 10)
     };
     socket.emit('update_settings', { code: currentRoomCode, settings });
   }
@@ -196,9 +205,6 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   sliderTurnTimer.addEventListener('input', () => {
     labelTurnTimer.textContent = `${sliderTurnTimer.value}s`;
-    emitSettingsUpdate();
-  });
-  selectChainMode.addEventListener('change', () => {
     emitSettingsUpdate();
   });
 
@@ -318,12 +324,9 @@ document.addEventListener('DOMContentLoaded', () => {
       sliderTurnTimer.value = state.settings.turnTimer;
       labelTurnTimer.textContent = `${state.settings.turnTimer}s`;
 
-      selectChainMode.value = state.settings.chainMode;
-
       // Host controls availability
       sliderWinningScore.disabled = !isMeHost;
       sliderTurnTimer.disabled = !isMeHost;
-      selectChainMode.disabled = !isMeHost;
       lobbyNonHostNotice.style.display = isMeHost ? 'none' : 'block';
 
       if (isMeHost) {
@@ -353,15 +356,8 @@ document.addEventListener('DOMContentLoaded', () => {
         baseWordCard.classList.add('animate-card-pop');
       }
 
-      // Chain Mode Hint
-      if (state.settings.chainMode === 'compound') {
-        gameModeHint.textContent = `Pair with "${state.baseWord}": [${state.baseWord}] + [word] OR [word] + [${state.baseWord}]`;
-      } else if (state.settings.chainMode === 'shiritori') {
-        const lastLetter = state.baseWord.slice(-1).toUpperCase();
-        gameModeHint.textContent = `Chain with last letter: Must start with "${lastLetter}"`;
-      } else {
-        gameModeHint.textContent = `Type any valid unused English word!`;
-      }
+      // Compound Word Mode Hint
+      gameModeHint.textContent = `Pair with "${state.baseWord}": e.g. [${state.baseWord}] + [word] OR [word] + [${state.baseWord}]`;
 
       // Active Turn Indicator
       const isMyTurn = state.currentTurnPlayerId === socket.id;
@@ -406,10 +402,14 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // Update Scoreboard with Progress Bars
+      if (targetScoreHint) {
+        targetScoreHint.textContent = `Goal: ${state.settings.winningScore} pts`;
+      }
       renderScoreboard(state.players, state.currentTurnPlayerId, state.settings.winningScore);
 
-      // Update Word History Feed
+      // Update Word History Feed & Used Words Chips
       renderWordHistory(state.wordHistory);
+      renderUsedWords(state.usedWordsList, inputSearchUsedWords ? inputSearchUsedWords.value : '');
     }
 
     // 3. Game Over State Update
@@ -511,6 +511,63 @@ document.addEventListener('DOMContentLoaded', () => {
         <div>${badge}</div>
       `;
       historyFeed.appendChild(el);
+    });
+  }
+
+  // Sidebar Tab Switching
+  if (tabBtnScores && tabBtnUsedWords) {
+    tabBtnScores.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      tabBtnScores.classList.add('active');
+      tabBtnUsedWords.classList.remove('active');
+      tabContentScores.style.display = 'block';
+      tabContentUsedWords.style.display = 'none';
+    });
+
+    tabBtnUsedWords.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      tabBtnUsedWords.classList.add('active');
+      tabBtnScores.classList.remove('active');
+      tabContentScores.style.display = 'none';
+      tabContentUsedWords.style.display = 'block';
+    });
+  }
+
+  // Used Words Chips & Search
+  let cachedUsedWordsList = [];
+
+  function renderUsedWords(usedWordsList, searchTerm = '') {
+    if (usedWordsList) cachedUsedWordsList = usedWordsList;
+    const list = cachedUsedWordsList || [];
+
+    if (usedWordsBadge) usedWordsBadge.textContent = list.length;
+    if (usedWordsSummary) usedWordsSummary.textContent = `${list.length} used`;
+
+    if (!usedWordsChips) return;
+    usedWordsChips.innerHTML = '';
+
+    if (list.length === 0) {
+      usedWordsChips.innerHTML = '<span class="no-words-hint">No words played yet</span>';
+      return;
+    }
+
+    const term = (searchTerm || '').trim().toLowerCase();
+    const sorted = [...new Set(list)].sort();
+
+    sorted.forEach(word => {
+      const chip = document.createElement('span');
+      chip.className = 'used-word-chip';
+      if (term && word.includes(term)) {
+        chip.classList.add('highlight-match');
+      }
+      chip.textContent = word;
+      usedWordsChips.appendChild(chip);
+    });
+  }
+
+  if (inputSearchUsedWords) {
+    inputSearchUsedWords.addEventListener('input', () => {
+      renderUsedWords(null, inputSearchUsedWords.value);
     });
   }
 

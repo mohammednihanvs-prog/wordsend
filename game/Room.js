@@ -30,7 +30,7 @@ class Room {
     this.settings = {
       winningScore: config.RULES.DEFAULT_WINNING_SCORE,
       turnTimer: config.RULES.DEFAULT_TURN_TIMER,
-      chainMode: config.RULES.DEFAULT_CHAIN_MODE
+      chainMode: 'compound'
     };
 
     // Timer management
@@ -147,10 +147,7 @@ class Room {
       }
     }
 
-    if (newSettings.chainMode && config.RULES.CHAIN_MODES.includes(newSettings.chainMode)) {
-      this.settings.chainMode = newSettings.chainMode;
-    }
-
+    // Winning score & turn timer updates
     this.broadcastState();
     return { success: true, settings: this.settings };
   }
@@ -232,16 +229,19 @@ class Room {
     const player = this.players.get(socketId);
     if (!player) return { success: false, reason: 'Player not found.' };
 
-    const validation = validateWord(word, this.baseWord, this.usedWords, this.settings.chainMode);
+    const validation = validateWord(word, this.baseWord, this.usedWords);
 
     if (validation.valid) {
-      // Correct word
+      // Correct compound word
       const prevBaseWord = this.baseWord;
       const cleanWord = validation.cleanWord;
 
       player.score += config.SCORING.CORRECT;
       this.baseWord = cleanWord;
-      this.usedWords.add(cleanWord);
+      this.usedWords.add(cleanWord.toLowerCase());
+      if (validation.compoundWord) {
+        this.usedWords.add(validation.compoundWord.toLowerCase());
+      }
       this.failedAttemptsInCycle = 0; // Reset anti-stall
 
       const historyEntry = {
@@ -482,7 +482,8 @@ class Room {
       currentTurnPlayerId: this.getCurrentTurnPlayerId(),
       baseWord: this.baseWord,
       timeRemaining: this.timeRemaining,
-      wordHistory: this.wordHistory.slice(0, 30),
+      wordHistory: this.wordHistory.slice(0, 50),
+      usedWordsList: Array.from(this.usedWords),
       winner: this.winner,
       bannerMessage
     };
