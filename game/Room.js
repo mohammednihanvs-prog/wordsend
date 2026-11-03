@@ -281,7 +281,7 @@ class Room {
         return { success: true, win: true };
       }
 
-      this.advanceTurn(400);
+      this.advanceTurn();
       return { success: true };
     } else {
       // Incorrect word (0 points, base word unchanged)
@@ -317,7 +317,7 @@ class Room {
       // Check anti-stall rule
       this.checkAntiStall();
 
-      this.advanceTurn(400);
+      this.advanceTurn();
       return { success: false, reason: validation.reason };
     }
   }
@@ -371,7 +371,7 @@ class Room {
     // Check anti-stall rule
     this.checkAntiStall();
 
-    this.advanceTurn(400);
+    this.advanceTurn();
   }
 
   /**
@@ -398,20 +398,12 @@ class Room {
   /**
    * Advances turn to next player in turn order
    */
-  advanceTurn(delayMs = 0) {
+  advanceTurn() {
     this.clearTurnTimer();
     if (this.turnOrder.length === 0) return;
 
     this.currentTurnIndex = (this.currentTurnIndex + 1) % this.turnOrder.length;
-    if (delayMs > 0) {
-      setTimeout(() => {
-        if (this.status === 'playing') {
-          this.startTurn();
-        }
-      }, delayMs);
-    } else {
-      this.startTurn();
-    }
+    this.startTurn();
   }
 
   /**

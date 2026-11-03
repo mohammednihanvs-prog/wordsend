@@ -64,6 +64,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const myAvatarPill = document.getElementById('my-avatar-pill');
   const myNamePill = document.getElementById('my-name-pill');
   const myScoreNumber = document.getElementById('my-score-number');
+  const arenaMyAvatar = document.getElementById('arena-my-avatar');
+  const arenaMyName = document.getElementById('arena-my-name');
+  const arenaMyScore = document.getElementById('arena-my-score');
 
   // DOM Elements - Game Over
   const winnerAvatar = document.getElementById('winner-avatar');
@@ -385,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
         inputGameWord.placeholder = activePlayer ? `Waiting for ${activePlayer.nickname}...` : 'Waiting...';
       }
 
-      // Update personal score pill
+      // Update personal score pill & arena score bar
       const me = state.players.find(p => p.id === socket.id || (myPlayer && p.id === myPlayer.id));
       if (me) {
         if (myAvatarPill) myAvatarPill.textContent = me.emoji;
@@ -393,6 +396,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (myScoreNumber) {
           myScoreNumber.textContent = `${me.score} pts`;
           myScoreNumber.style.color = me.score >= 0 ? '#36ab79' : '#ff4757';
+        }
+        if (arenaMyAvatar) arenaMyAvatar.textContent = me.emoji;
+        if (arenaMyName) arenaMyName.textContent = `${me.nickname} (You)`;
+        if (arenaMyScore) {
+          arenaMyScore.textContent = `${me.score} pts`;
+          arenaMyScore.style.color = me.score >= 0 ? '#2ed573' : '#ff4757';
         }
       }
 

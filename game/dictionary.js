@@ -24,35 +24,35 @@ for (const word of extraCompounds) {
  * @param {string} chainMode - 'compound' | 'shiritori' | 'any'
  * @returns {{ valid: boolean, reason?: string, cleanWord: string, compoundForm?: string }}
  */
-function validateWord(rawInput, baseWord, usedWords, chainMode = 'compound') {
+function validateWord(rawInput, baseWord, usedWords, chainMode = config.RULES.DEFAULT_CHAIN_MODE) {
   if (!rawInput || typeof rawInput !== 'string') {
     return { valid: false, reason: 'Please enter a word.', cleanWord: '' };
   }
 
-  const clean = rawInput.trim().toLowerCase();
-  const base = (baseWord || '').trim().toLowerCase();
+  // Clean input: lowercase and remove any stray punctuation/spaces from mobile keyboards
+  const clean = rawInput.trim().toLowerCase().replace(/[^a-z]/g, '');
+  const base = (baseWord || '').trim().toLowerCase().replace(/[^a-z]/g, '');
 
-  // 1. Letters only
-  if (!/^[a-z]+$/.test(clean)) {
-    return { valid: false, reason: 'Letters only! No numbers, spaces, or symbols.', cleanWord: clean };
+  if (clean.length === 0) {
+    return { valid: false, reason: 'Please enter a valid word.', cleanWord: '' };
   }
 
-  // 2. Minimum length check
+  // 1. Minimum length check
   if (clean.length < config.RULES.MIN_WORD_LENGTH) {
     return { valid: false, reason: `Word must be at least ${config.RULES.MIN_WORD_LENGTH} letters.`, cleanWord: clean };
   }
 
-  // 3. Cannot reuse same word as current base word
+  // 2. Cannot repeat the current base word
   if (clean === base) {
     return { valid: false, reason: `Cannot repeat the current base word "${baseWord}".`, cleanWord: clean };
   }
 
-  // 4. Must not be already used in this match
+  // 3. Must not be already used in this match
   if (usedWords && usedWords.has(clean)) {
-    return { valid: false, reason: `"${clean}" was already used in this game!`, cleanWord: clean };
+    return { valid: false, reason: `"${clean}" was already played in this game!`, cleanWord: clean };
   }
 
-  // 5. Must exist in English dictionary
+  // 4. Must exist in English dictionary
   if (!dictionarySet.has(clean)) {
     return { valid: false, reason: `"${clean}" is not in the dictionary!`, cleanWord: clean };
   }

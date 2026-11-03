@@ -53,11 +53,16 @@ async function testAntiStallAndTimeout() {
 
   await new Promise(r => server.listen(PORT, r));
 
-  const client1 = ioClient(`http://localhost:${PORT}`);
-  const client2 = ioClient(`http://localhost:${PORT}`);
+  function createClient() {
+    return new Promise((resolve) => {
+      const s = ioClient(`http://localhost:${PORT}`, { transports: ['websocket', 'polling'] });
+      if (s.connected) return resolve(s);
+      s.on('connect', () => resolve(s));
+    });
+  }
 
-  await new Promise(r => client1.on('connect', r));
-  await new Promise(r => client2.on('connect', r));
+  const client1 = await createClient();
+  const client2 = await createClient();
 
   await new Promise(r => client1.emit('create_room', { nickname: 'P1' }, r));
   await new Promise(r => client2.emit('join_room', { code: 'STAL', nickname: 'P2' }, r));

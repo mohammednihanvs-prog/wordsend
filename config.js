@@ -24,11 +24,11 @@ module.exports = {
     MAX_TURN_TIMER: 30,
 
     // Chain modes:
+    // 'any'       -> Any valid unused English word (Default: fast, fun, accessible)
     // 'compound'  -> Word must form a compound word with base word (e.g. base -> ball = baseball)
     // 'shiritori' -> Word must start with base word's last letter (e.g. base -> elephant)
-    // 'any'       -> Any valid unused English word
-    DEFAULT_CHAIN_MODE: 'compound',
-    CHAIN_MODES: ['compound', 'shiritori', 'any'],
+    DEFAULT_CHAIN_MODE: 'any',
+    CHAIN_MODES: ['any', 'compound', 'shiritori'],
 
     // Anti-stall trigger: number of full cycles of all players skipping/failing before server resets base word
     ANTI_STALL_CYCLES: 1,
