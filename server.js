@@ -16,8 +16,16 @@ const io = new Server(server, {
   }
 });
 
-// Serve frontend assets
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve frontend assets with strict no-cache headers so updates load immediately
+app.use(express.static(path.join(__dirname, 'public'), {
+  etag: false,
+  maxAge: 0,
+  setHeaders: (res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+  }
+}));
 
 // Fallback to index.html for SPA behavior
 app.use((req, res) => {

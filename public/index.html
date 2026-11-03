@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wordsend | Real-Time Word Chain Game</title>
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/animations.css">
+  <link rel="stylesheet" href="/css/style.css?v=3.1">
+  <link rel="stylesheet" href="/css/animations.css?v=3.1">
 </head>
 <body>
   <div id="app">
@@ -146,7 +146,17 @@
           </div>
         </div>
 
-        <div class="game-layout">
+        <!-- Prominent Top Navigation Tabs -->
+        <div class="game-top-tabs">
+          <button id="nav-btn-game" class="game-nav-tab active" type="button">
+            🎮 Play Arena
+          </button>
+          <button id="nav-btn-bubbles" class="game-nav-tab" type="button">
+            🫧 Used Words Tab (<span id="top-used-words-badge">0</span>)
+          </button>
+        </div>
+
+        <div id="view-game-arena" class="game-layout">
           <!-- Main Arena (Center) -->
           <div class="game-main-arena">
             <!-- Active Turn Banner -->
@@ -201,6 +211,11 @@
               <div id="game-mode-hint" class="hint-text">
                 Hint: Type a word that pairs with the base word!
               </div>
+
+              <!-- Shortcut pill to open Used Words Bubble Tab -->
+              <button id="btn-quick-view-bubbles" class="btn-quick-bubbles" type="button">
+                🫧 View Used Words in Bubbles (<span id="quick-used-words-badge">0</span>)
+              </button>
             </div>
           </div>
 
@@ -237,25 +252,52 @@
               </div>
             </div>
 
-            <!-- Tab 2: Used Words Bubble Cloud (Shows JUST the used words in bubbles) -->
+            <!-- Tab 2: Sidebar Mini Bubble Container -->
             <div id="tab-content-bubbles" class="sidebar-tab-content" style="display: none;">
               <div class="bubble-cloud-box">
                 <div class="bubble-cloud-header">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                     <h4 class="section-title" style="margin: 0;">🫧 Used Words</h4>
-                    <span id="bubbles-count-text" class="bubble-count-pill">0 words</span>
+                    <span id="sidebar-bubbles-count" class="bubble-count-pill">0 words</span>
                   </div>
-                  <input type="text" id="input-search-bubbles" class="input-bubble-search" placeholder="🔍 Search used words..." autocomplete="off">
+                  <input type="text" id="input-sidebar-search-bubbles" class="input-bubble-search" placeholder="🔍 Search used words..." autocomplete="off">
                 </div>
-
-                <!-- Pure Bubble Cloud: Just the used words in bubbles -->
-                <div id="used-words-bubbles" class="bubbles-playground">
+                <div id="sidebar-used-words-bubbles" class="bubbles-playground" style="max-height: 280px;">
                   <div class="empty-bubbles-state">
-                    <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🫧</span>
-                    <p style="margin: 0; font-size: 0.85rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
-                    <span style="font-size: 0.75rem; color: #a4b0be;">Played words will appear in bubbles here.</span>
+                    <span style="font-size: 2rem; display: block; margin-bottom: 6px;">🫧</span>
+                    <p style="margin: 0; font-size: 0.8rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dedicated Full-View Used Words Tab (Shows JUST the used words in bubbles) -->
+        <div id="view-used-words-tab" class="used-words-tab-view" style="display: none;">
+          <div class="bubble-cloud-box" style="padding: 20px;">
+            <div class="bubble-cloud-header">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 class="section-title" style="margin: 0; font-size: 1.25rem;">🫧 Used Words in This Match</h3>
+                <span id="bubbles-count-text" class="bubble-count-pill" style="font-size: 0.85rem; padding: 4px 12px;">0 words played</span>
+              </div>
+              <p style="margin: 0 0 14px; font-size: 0.85rem; color: var(--muted);">
+                These words and compounds have already been played and cannot be repeated.
+              </p>
+              <div style="display: flex; gap: 10px; margin-bottom: 6px;">
+                <input type="text" id="input-search-bubbles" class="input-bubble-search" placeholder="🔍 Search or filter used word bubbles..." autocomplete="off">
+                <button id="btn-back-to-arena" class="btn-chunky btn-green" style="min-width: 140px; font-size: 0.88rem;" type="button">
+                  🎮 Back to Game
+                </button>
+              </div>
+            </div>
+
+            <!-- Pure Bubble Cloud: Just the used words in bubbles -->
+            <div id="used-words-bubbles" class="bubbles-playground" style="min-height: 280px; max-height: 480px;">
+              <div class="empty-bubbles-state">
+                <span style="font-size: 2.6rem; display: block; margin-bottom: 8px;">🫧</span>
+                <p style="margin: 0; font-size: 0.95rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
+                <span style="font-size: 0.8rem; color: #a4b0be;">Played words and compounds will bubble up here!</span>
               </div>
             </div>
           </div>
@@ -297,8 +339,8 @@
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/audio.js"></script>
-  <script src="/js/confetti.js"></script>
-  <script src="/js/app.js"></script>
+  <script src="/js/audio.js?v=3.1"></script>
+  <script src="/js/confetti.js?v=3.1"></script>
+  <script src="/js/app.js?v=3.1"></script>
 </body>
 </html>

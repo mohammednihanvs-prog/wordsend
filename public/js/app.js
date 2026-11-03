@@ -36,6 +36,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const lobbyStartHint = document.getElementById('lobby-start-hint');
   const btnMuteLobby = document.getElementById('btn-mute-toggle-lobby');
 
+  // DOM Elements - Primary View Tabs & Used Words Tab
+  const navBtnGame = document.getElementById('nav-btn-game');
+  const navBtnBubbles = document.getElementById('nav-btn-bubbles');
+  const viewGameArena = document.getElementById('view-game-arena');
+  const viewUsedWordsTab = document.getElementById('view-used-words-tab');
+  const btnBackToArena = document.getElementById('btn-back-to-arena');
+  const btnQuickViewBubbles = document.getElementById('btn-quick-view-bubbles');
+  const topUsedWordsBadge = document.getElementById('top-used-words-badge');
+  const quickUsedWordsBadge = document.getElementById('quick-used-words-badge');
+
   // DOM Elements - Sidebar Tabs & Used Words Bubbles
   const tabBtnScores = document.getElementById('tab-btn-scores');
   const tabBtnBubbles = document.getElementById('tab-btn-bubbles');
@@ -43,8 +53,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const tabContentBubbles = document.getElementById('tab-content-bubbles');
   const usedWordsBadge = document.getElementById('used-words-badge');
   const bubblesCountText = document.getElementById('bubbles-count-text');
+  const sidebarBubblesCount = document.getElementById('sidebar-bubbles-count');
   const inputSearchBubbles = document.getElementById('input-search-bubbles');
+  const inputSidebarSearchBubbles = document.getElementById('input-sidebar-search-bubbles');
   const usedWordsBubbles = document.getElementById('used-words-bubbles');
+  const sidebarUsedWordsBubbles = document.getElementById('sidebar-used-words-bubbles');
   const targetScoreHint = document.getElementById('target-score-hint');
 
   // DOM Elements - Game
@@ -514,6 +527,42 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Primary View Navigation (Play Arena vs Used Words Tab)
+  function showArenaView() {
+    if (navBtnGame) navBtnGame.classList.add('active');
+    if (navBtnBubbles) navBtnBubbles.classList.remove('active');
+    if (viewGameArena) viewGameArena.style.display = 'grid';
+    if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'none';
+  }
+
+  function showUsedWordsTabView() {
+    if (navBtnBubbles) navBtnBubbles.classList.add('active');
+    if (navBtnGame) navBtnGame.classList.remove('active');
+    if (viewGameArena) viewGameArena.style.display = 'none';
+    if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'block';
+    renderBubbles(cachedUsedWordsList, inputSearchBubbles ? inputSearchBubbles.value : '');
+  }
+
+  if (navBtnGame) navBtnGame.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showArenaView();
+  });
+
+  if (navBtnBubbles) navBtnBubbles.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showUsedWordsTabView();
+  });
+
+  if (btnBackToArena) btnBackToArena.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showArenaView();
+  });
+
+  if (btnQuickViewBubbles) btnQuickViewBubbles.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showUsedWordsTabView();
+  });
+
   // Sidebar Tab Switching (Scores vs Bubbles)
   if (tabBtnScores && tabBtnBubbles) {
     tabBtnScores.addEventListener('click', () => {
@@ -540,50 +589,62 @@ document.addEventListener('DOMContentLoaded', () => {
     if (usedWordsList) cachedUsedWordsList = usedWordsList;
     const list = cachedUsedWordsList || [];
 
+    const countText = `${list.length} word${list.length === 1 ? '' : 's'}`;
+    if (topUsedWordsBadge) topUsedWordsBadge.textContent = list.length;
+    if (quickUsedWordsBadge) quickUsedWordsBadge.textContent = list.length;
     if (usedWordsBadge) usedWordsBadge.textContent = list.length;
-    if (bubblesCountText) bubblesCountText.textContent = `${list.length} word${list.length === 1 ? '' : 's'}`;
-
-    if (!usedWordsBubbles) return;
-    usedWordsBubbles.innerHTML = '';
-
-    if (list.length === 0) {
-      usedWordsBubbles.innerHTML = `
-        <div class="empty-bubbles-state">
-          <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🫧</span>
-          <p style="margin: 0; font-size: 0.85rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
-          <span style="font-size: 0.75rem; color: #a4b0be;">Played words will appear in bubbles here.</span>
-        </div>
-      `;
-      return;
-    }
+    if (bubblesCountText) bubblesCountText.textContent = countText;
+    if (sidebarBubblesCount) sidebarBubblesCount.textContent = countText;
 
     const term = (searchTerm || '').trim().toLowerCase();
     const sorted = [...new Set(list)].sort();
-    let matchCount = 0;
 
-    sorted.forEach((word, idx) => {
-      const isMatch = term ? word.toLowerCase().includes(term) : true;
-      if (!isMatch) return;
-      matchCount++;
-
-      const bubble = document.createElement('div');
-      bubble.className = `word-bubble word-bubble-${idx % 8}`;
-      if (term && word.toLowerCase().includes(term)) {
-        bubble.classList.add('highlight-match');
+    const populateContainer = (container) => {
+      if (!container) return;
+      container.innerHTML = '';
+      if (list.length === 0) {
+        container.innerHTML = `
+          <div class="empty-bubbles-state">
+            <span style="font-size: 2.4rem; display: block; margin-bottom: 6px;">🫧</span>
+            <p style="margin: 0; font-size: 0.88rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
+            <span style="font-size: 0.78rem; color: #a4b0be;">Played words and compounds will appear here.</span>
+          </div>
+        `;
+        return;
       }
-      bubble.innerHTML = `<span>🫧</span><span>${escapeHtml(word)}</span>`;
-      bubble.title = `Used word: "${word}" (cannot be played again)`;
-      usedWordsBubbles.appendChild(bubble);
-    });
+      let matchCount = 0;
+      sorted.forEach((word, idx) => {
+        const isMatch = term ? word.toLowerCase().includes(term) : true;
+        if (!isMatch) return;
+        matchCount++;
 
-    if (matchCount === 0 && list.length > 0) {
-      usedWordsBubbles.innerHTML = `<span style="font-size: 0.8rem; color: var(--muted); padding: 20px;">No bubbles match "${escapeHtml(searchTerm)}"</span>`;
-    }
+        const bubble = document.createElement('div');
+        bubble.className = `word-bubble word-bubble-${idx % 8}`;
+        if (term && word.toLowerCase().includes(term)) {
+          bubble.classList.add('highlight-match');
+        }
+        bubble.innerHTML = `<span>🫧</span><span>${escapeHtml(word)}</span>`;
+        bubble.title = `Played word: "${word}"`;
+        container.appendChild(bubble);
+      });
+
+      if (matchCount === 0 && list.length > 0) {
+        container.innerHTML = `<span style="font-size: 0.85rem; color: var(--muted); padding: 20px;">No bubbles match "${escapeHtml(searchTerm)}"</span>`;
+      }
+    };
+
+    populateContainer(usedWordsBubbles);
+    populateContainer(sidebarUsedWordsBubbles);
   }
 
   if (inputSearchBubbles) {
     inputSearchBubbles.addEventListener('input', () => {
       renderBubbles(null, inputSearchBubbles.value);
+    });
+  }
+  if (inputSidebarSearchBubbles) {
+    inputSidebarSearchBubbles.addEventListener('input', () => {
+      renderBubbles(null, inputSidebarSearchBubbles.value);
     });
   }
 
