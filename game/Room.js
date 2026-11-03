@@ -226,6 +226,9 @@ class Room {
       return { success: false, reason: "It's not your turn!" };
     }
 
+    // Freeze turn timer immediately to prevent timer/submission race conditions
+    this.clearTurnTimer();
+
     const player = this.players.get(socketId);
     if (!player) return { success: false, reason: 'Player not found.' };
 
@@ -260,6 +263,8 @@ class Room {
         result: 'correct',
         playerId: player.id,
         playerNickname: player.nickname,
+        playerEmoji: player.emoji,
+        playerColor: player.color,
         delta: config.SCORING.CORRECT,
         word: cleanWord,
         baseWord: prevBaseWord,
@@ -276,7 +281,7 @@ class Room {
         return { success: true, win: true };
       }
 
-      this.advanceTurn();
+      this.advanceTurn(400);
       return { success: true };
     } else {
       // Incorrect word (0 points, base word unchanged)
@@ -301,6 +306,8 @@ class Room {
         result: 'incorrect',
         playerId: player.id,
         playerNickname: player.nickname,
+        playerEmoji: player.emoji,
+        playerColor: player.color,
         delta: config.SCORING.INCORRECT,
         word: validation.cleanWord || word,
         reason: validation.reason,
@@ -310,7 +317,7 @@ class Room {
       // Check anti-stall rule
       this.checkAntiStall();
 
-      this.advanceTurn();
+      this.advanceTurn(400);
       return { success: false, reason: validation.reason };
     }
   }
@@ -323,6 +330,9 @@ class Room {
 
     const activePlayerId = this.getCurrentTurnPlayerId();
     if (socketId !== activePlayerId) return;
+
+    // Freeze timer immediately
+    this.clearTurnTimer();
 
     const player = this.players.get(socketId);
     if (!player) return;
@@ -352,6 +362,8 @@ class Room {
       result: actionType,
       playerId: player.id,
       playerNickname: player.nickname,
+      playerEmoji: player.emoji,
+      playerColor: player.color,
       delta: config.SCORING.SKIP,
       message
     });
@@ -359,7 +371,7 @@ class Room {
     // Check anti-stall rule
     this.checkAntiStall();
 
-    this.advanceTurn();
+    this.advanceTurn(400);
   }
 
   /**
@@ -386,12 +398,20 @@ class Room {
   /**
    * Advances turn to next player in turn order
    */
-  advanceTurn() {
+  advanceTurn(delayMs = 0) {
     this.clearTurnTimer();
     if (this.turnOrder.length === 0) return;
 
     this.currentTurnIndex = (this.currentTurnIndex + 1) % this.turnOrder.length;
-    this.startTurn();
+    if (delayMs > 0) {
+      setTimeout(() => {
+        if (this.status === 'playing') {
+          this.startTurn();
+        }
+      }, delayMs);
+    } else {
+      this.startTurn();
+    }
   }
 
   /**

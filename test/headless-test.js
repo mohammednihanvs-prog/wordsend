@@ -180,6 +180,7 @@ async function runTestSuite() {
 
     // Let's set room.baseWord explicitly to 'base' to test deterministic compound word chaining
     const room = rooms.get(roomCode);
+    room.usedWords.clear();
     room.baseWord = 'base';
     room.usedWords.add('base');
 

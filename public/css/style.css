@@ -132,7 +132,10 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opa
 .scoreboard-box .section-title, .history-box .section-title { margin-bottom: 11px !important; font-size: .87rem; }
 .scoreboard-rows { display: flex; flex-direction: column; gap: 7px; }
 .score-row { display: flex; flex-direction: column; padding: 9px 10px; border: 1px solid #e9ebdf; border-radius: 11px; background: #fff; transition: border .2s, transform .2s; }
-.score-row.active-turn { border-color: #cfe795; box-shadow: 0 0 0 2px rgba(201,243,107,.22); }
+.my-score-pill { display: inline-flex; align-items: center; gap: 8px; background: #fff; padding: 6px 14px; border-radius: 14px; border: 2px solid #ced6e0; font-size: .95rem; font-weight: 700; box-shadow: 0 2px 6px rgba(0,0,0,.06); }
+.my-score-val { color: #36ab79; font: 700 1.05rem 'DM Mono', monospace; }
+.score-row.my-row { border: 2px solid #70a1ff !important; background: #f0f5ff !important; }
+.score-row.active-turn { border-color: #ffa502 !important; box-shadow: 0 0 10px rgba(255,165,2,.35) !important; }
 .score-row-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
 .score-player-info { display: flex; align-items: center; gap: 7px; font-size: .78rem; font-weight: 700; }
 .score-value { font: 600 .84rem 'DM Mono', monospace; }

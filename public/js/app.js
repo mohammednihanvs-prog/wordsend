@@ -60,6 +60,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const reactionsContainer = document.getElementById('reactions-container');
   const systemBanner = document.getElementById('system-banner');
 
+  // DOM Elements - Personal Live Score Pill
+  const myAvatarPill = document.getElementById('my-avatar-pill');
+  const myNamePill = document.getElementById('my-name-pill');
+  const myScoreNumber = document.getElementById('my-score-number');
+
   // DOM Elements - Game Over
   const winnerAvatar = document.getElementById('winner-avatar');
   const winnerName = document.getElementById('winner-name');
@@ -213,6 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!word) return;
 
     window.soundEngine.playClick();
+    btnSubmitWord.disabled = true;
+    btnSkipTurn.disabled = true;
     socket.emit('submit_word', { code: currentRoomCode, word });
     inputGameWord.value = '';
 
@@ -240,6 +247,8 @@ document.addEventListener('DOMContentLoaded', () => {
   btnSkipTurn.addEventListener('click', () => {
     window.soundEngine.playClick();
     if (!currentRoomCode) return;
+    btnSkipTurn.disabled = true;
+    btnSubmitWord.disabled = true;
     socket.emit('skip_turn', { code: currentRoomCode });
   });
 
@@ -376,6 +385,17 @@ document.addEventListener('DOMContentLoaded', () => {
         inputGameWord.placeholder = activePlayer ? `Waiting for ${activePlayer.nickname}...` : 'Waiting...';
       }
 
+      // Update personal score pill
+      const me = state.players.find(p => p.id === socket.id || (myPlayer && p.id === myPlayer.id));
+      if (me) {
+        if (myAvatarPill) myAvatarPill.textContent = me.emoji;
+        if (myNamePill) myNamePill.textContent = `${me.nickname} (You):`;
+        if (myScoreNumber) {
+          myScoreNumber.textContent = `${me.score} pts`;
+          myScoreNumber.style.color = me.score >= 0 ? '#36ab79' : '#ff4757';
+        }
+      }
+
       // Update Scoreboard with Progress Bars
       renderScoreboard(state.players, state.currentTurnPlayerId, state.settings.winningScore);
 
@@ -426,17 +446,20 @@ document.addEventListener('DOMContentLoaded', () => {
     scoreboardRows.innerHTML = '';
     players.forEach(p => {
       const isTurn = p.id === activeTurnId;
+      const isMe = p.id === socket.id || (myPlayer && p.id === myPlayer.id);
       const progressPercent = Math.min(100, Math.max(0, (p.score / winningScore) * 100));
 
       const row = document.createElement('div');
-      row.className = `score-row ${isTurn ? 'active-turn' : ''}`;
+      row.className = `score-row ${isTurn ? 'active-turn' : ''} ${isMe ? 'my-row' : ''}`;
       row.innerHTML = `
         <div class="score-row-header">
           <div class="score-player-info">
-            <div class="player-avatar" style="width: 30px; height: 30px; font-size: 1rem; background: ${p.color};">${p.emoji}</div>
-            <span>${escapeHtml(p.nickname)} ${p.id === socket.id ? '(You)' : ''}</span>
+            <div class="player-avatar" style="width: 28px; height: 28px; font-size: .95rem; background: ${p.color};">${p.emoji}</div>
+            <span>${escapeHtml(p.nickname)}</span>
+            ${isMe ? '<span class="badge-you" style="font-size: 0.65rem; padding: 2px 6px;">YOU</span>' : ''}
+            ${isTurn ? '<span style="font-size: 0.7rem; color: #ffa502; font-weight: 700;">⏳ TURN</span>' : ''}
           </div>
-          <span class="score-value" style="color: ${p.score >= 0 ? '#2ed573' : '#ff4757'};">${p.score} pts</span>
+          <span class="score-value" style="color: ${p.score >= 0 ? '#2ed573' : '#ff4757'}; font-weight: 700;">${p.score} pts</span>
         </div>
         <div class="progress-track">
           <div class="progress-fill" style="width: ${progressPercent}%; background: ${p.color};"></div>
@@ -521,19 +544,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Word Evaluated / Score Animation Feedback
   socket.on('word_evaluated', (data) => {
-    spawnScoreToast(data.result, data.delta, data.message);
+    const isMe = (data.playerId === socket.id) || (myPlayer && data.playerId === myPlayer.id);
+
+    spawnScoreToast(data.result, data.delta, isMe, data.playerNickname);
 
     if (data.result === 'correct') {
-      window.soundEngine.playCorrect();
+      if (isMe) {
+        window.soundEngine.playCorrect();
+        showBanner(`🎉 You scored +1 point with "${data.word}"!`, 3000);
+      } else {
+        window.soundEngine.playClick();
+        showBanner(`🎯 ${data.playerNickname} scored +1 with "${data.word}"!`, 3000);
+      }
     } else if (data.result === 'incorrect') {
-      window.soundEngine.playIncorrect();
-      if (data.playerId === socket.id) {
-        showBanner(`❌ ${data.reason || 'Invalid word!'}`, 2500);
+      if (isMe) {
+        window.soundEngine.playIncorrect();
+        showBanner(`❌ Your word "${data.word}" was invalid: ${data.reason}`, 3000);
+      } else {
+        showBanner(`❌ ${data.playerNickname}'s word "${data.word}" was rejected (0 pts)`, 3000);
       }
     } else if (data.result === 'skip' || data.result === 'timeout') {
-      window.soundEngine.playSkip();
-      if (data.playerId === socket.id) {
-        showBanner(`⏩ ${data.result === 'timeout' ? "Time ran out! (-1)" : "Skipped turn (-1)"}`, 2200);
+      if (isMe) {
+        window.soundEngine.playSkip();
+        showBanner(data.result === 'timeout' ? `⏰ Your time ran out! (-1 pt)` : `⏩ You skipped your turn (-1 pt)`, 3000);
+      } else {
+        showBanner(data.result === 'timeout' ? `⏰ Time's up for ${data.playerNickname}! (-1 pt)` : `⏩ ${data.playerNickname} skipped turn (-1 pt)`, 3000);
       }
     }
   });
@@ -564,19 +599,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Floating score toast (+1 green sparkle, 0 grey shake, -1 red wobble)
-  function spawnScoreToast(result, delta, message) {
+  function spawnScoreToast(result, delta, isMe, playerNickname) {
     const toast = document.createElement('div');
     toast.className = `score-toast score-toast-${result}`;
+    const targetLabel = isMe ? 'YOU' : (playerNickname || 'Player');
 
     if (result === 'correct') {
       toast.classList.add('float-score-correct');
-      toast.textContent = `+${delta} ✨`;
+      toast.innerHTML = `+${delta} ✨ <span style="font-size: 1rem; opacity: 0.9;">(${escapeHtml(targetLabel)})</span>`;
     } else if (result === 'incorrect') {
       toast.classList.add('float-score-incorrect');
-      toast.textContent = `0 💨`;
+      toast.innerHTML = `0 💨 <span style="font-size: 1rem; opacity: 0.9;">(${escapeHtml(targetLabel)})</span>`;
     } else {
       toast.classList.add('float-score-skip');
-      toast.textContent = `${delta} 💔`;
+      toast.innerHTML = `${delta} 💔 <span style="font-size: 1rem; opacity: 0.9;">(${escapeHtml(targetLabel)})</span>`;
     }
 
     floatersContainer.appendChild(toast);
