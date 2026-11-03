@@ -133,6 +133,7 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opa
 .global-tab-btn.active { background: #fff; color: #3742fa; box-shadow: 0 4px 12px rgba(55,66,250,0.15); transform: translateY(-1px); }
 .global-tab-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.5); color: var(--ink); }
 .global-used-words-badge { background: #3742fa; color: #fff; font: 700 0.72rem 'DM Mono', monospace; padding: 2px 7px; border-radius: 20px; }
+.global-logs-badge { background: #10ac84; color: #fff; font: 700 0.72rem 'DM Mono', monospace; padding: 2px 7px; border-radius: 20px; }
 .used-words-card { max-width: 680px; margin: 0 auto; }
 
 .game-top-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: #edf0e6; padding: 5px; border-radius: 16px; }

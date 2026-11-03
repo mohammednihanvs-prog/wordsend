@@ -16,15 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
   const screenGame = document.getElementById('screen-game');
   const screenGameover = document.getElementById('screen-gameover');
   const screenUsedWords = document.getElementById('screen-used-words');
+  const screenLogs = document.getElementById('screen-logs');
 
   // DOM Elements - Universal Global Tabs
   const globalTabGame = document.getElementById('global-tab-game');
+  const globalTabLogs = document.getElementById('global-tab-logs');
   const globalTabBubbles = document.getElementById('global-tab-bubbles');
+  const btnLobbyViewLogs = document.getElementById('btn-lobby-view-logs');
   const btnLobbyViewBubbles = document.getElementById('btn-lobby-view-bubbles');
+  const btnBackFromGlobalLogs = document.getElementById('btn-back-from-global-logs');
   const btnBackFromGlobalBubbles = document.getElementById('btn-back-from-global-bubbles');
   const inputGlobalSearchBubbles = document.getElementById('input-global-search-bubbles');
   const globalUsedWordsBubbles = document.getElementById('global-used-words-bubbles');
   const globalBubblesCountText = document.getElementById('global-bubbles-count-text');
+  const globalLogsCountText = document.getElementById('global-logs-count-text');
+  const globalHistoryFeed = document.getElementById('global-history-feed');
 
   // DOM Elements - Home
   const inputNickname = document.getElementById('input-nickname');
@@ -46,24 +52,33 @@ document.addEventListener('DOMContentLoaded', () => {
   const lobbyStartHint = document.getElementById('lobby-start-hint');
   const btnMuteLobby = document.getElementById('btn-mute-toggle-lobby');
 
-  // DOM Elements - Primary View Tabs & Used Words Tab
+  // DOM Elements - Primary View Tabs, Match Logs & Used Words Tab
   const navBtnGame = document.getElementById('nav-btn-game');
+  const navBtnLogs = document.getElementById('nav-btn-logs');
   const navBtnBubbles = document.getElementById('nav-btn-bubbles');
   const viewGameArena = document.getElementById('view-game-arena');
+  const viewLogsTab = document.getElementById('view-logs-tab');
   const viewUsedWordsTab = document.getElementById('view-used-words-tab');
   const btnBackToArena = document.getElementById('btn-back-to-arena');
+  const btnBackToArenaFromLogs = document.getElementById('btn-back-to-arena-from-logs');
+  const btnQuickViewLogs = document.getElementById('btn-quick-view-logs');
   const btnQuickViewBubbles = document.getElementById('btn-quick-view-bubbles');
   const topUsedWordsBadge = document.getElementById('top-used-words-badge');
   const quickUsedWordsBadge = document.getElementById('quick-used-words-badge');
+  const arenaHistoryFeed = document.getElementById('arena-history-feed');
+  const arenaLogsCountText = document.getElementById('arena-logs-count-text');
 
-  // DOM Elements - Sidebar Tabs & Used Words Bubbles
+  // DOM Elements - Sidebar Tabs (Scores, Logs, Used Words)
   const tabBtnScores = document.getElementById('tab-btn-scores');
+  const tabBtnLogs = document.getElementById('tab-btn-logs');
   const tabBtnBubbles = document.getElementById('tab-btn-bubbles');
   const tabContentScores = document.getElementById('tab-content-scores');
+  const tabContentLogs = document.getElementById('tab-content-logs');
   const tabContentBubbles = document.getElementById('tab-content-bubbles');
   const usedWordsBadge = document.getElementById('used-words-badge');
   const bubblesCountText = document.getElementById('bubbles-count-text');
   const sidebarBubblesCount = document.getElementById('sidebar-bubbles-count');
+  const sidebarLogsCount = document.getElementById('sidebar-logs-count');
   const inputSearchBubbles = document.getElementById('input-search-bubbles');
   const inputSidebarSearchBubbles = document.getElementById('input-sidebar-search-bubbles');
   const usedWordsBubbles = document.getElementById('used-words-bubbles');
@@ -135,15 +150,21 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastActiveScreen = screenHome;
   function switchScreen(targetScreen) {
     if (!targetScreen) return;
-    if (targetScreen !== screenUsedWords) {
-      lastActiveScreen = targetScreen;
-      if (globalTabGame) globalTabGame.classList.add('active');
-      if (globalTabBubbles) globalTabBubbles.classList.remove('active');
-    } else {
+    if (targetScreen === screenUsedWords) {
       if (globalTabBubbles) globalTabBubbles.classList.add('active');
       if (globalTabGame) globalTabGame.classList.remove('active');
+      if (globalTabLogs) globalTabLogs.classList.remove('active');
+    } else if (targetScreen === screenLogs) {
+      if (globalTabLogs) globalTabLogs.classList.add('active');
+      if (globalTabGame) globalTabGame.classList.remove('active');
+      if (globalTabBubbles) globalTabBubbles.classList.remove('active');
+    } else {
+      lastActiveScreen = targetScreen;
+      if (globalTabGame) globalTabGame.classList.add('active');
+      if (globalTabLogs) globalTabLogs.classList.remove('active');
+      if (globalTabBubbles) globalTabBubbles.classList.remove('active');
     }
-    [screenHome, screenLobby, screenGame, screenGameover, screenUsedWords].forEach(s => {
+    [screenHome, screenLobby, screenGame, screenGameover, screenUsedWords, screenLogs].forEach(s => {
       if (s) s.classList.remove('active');
     });
     targetScreen.classList.add('active');
@@ -513,54 +534,86 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Word History Renderer
+  // Word History Renderer (Match Logs)
+  let cachedHistoryList = [];
   function renderWordHistory(history) {
-    historyFeed.innerHTML = '';
-    if (!history || history.length === 0) {
-      historyFeed.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 12px;">No words played yet.</div>';
-      return;
-    }
+    if (history) cachedHistoryList = history;
+    const items = cachedHistoryList || [];
 
-    history.forEach(item => {
-      const el = document.createElement('div');
-      el.className = `history-item item-${item.type}`;
-      let textContent = '';
-      let badge = '';
-
-      if (item.type === 'correct') {
-        badge = '<span style="color: #2ed573; font-weight: 700;">+1</span>';
-        textContent = item.compoundForm ? `<strong>${escapeHtml(item.word)}</strong> (${escapeHtml(item.compoundForm)})` : `<strong>${escapeHtml(item.word)}</strong>`;
-      } else if (item.type === 'incorrect') {
-        badge = '<span style="color: #a4b0be; font-weight: 700;">0</span>';
-        textContent = `<span style="text-decoration: line-through;">${escapeHtml(item.word)}</span> <span style="font-size: 0.75rem; color: #e74c3c;">(${escapeHtml(item.reason || 'Invalid')})</span>`;
-      } else {
-        badge = '<span style="color: #ff4757; font-weight: 700;">-1</span>';
-        textContent = `<em>${item.type === 'timeout' ? "Time's Up" : "Skipped"}</em>`;
-      }
-
-      el.innerHTML = `
-        <div style="display: flex; align-items: center; gap: 6px;">
-          <span>${item.playerEmoji || '👤'}</span>
-          <span>${textContent}</span>
-        </div>
-        <div>${badge}</div>
-      `;
-      historyFeed.appendChild(el);
+    const countText = `${items.length} event${items.length === 1 ? '' : 's'}`;
+    document.querySelectorAll('.global-logs-badge').forEach(b => {
+      b.textContent = items.length;
     });
+    if (sidebarLogsCount) sidebarLogsCount.textContent = countText;
+    if (arenaLogsCountText) arenaLogsCountText.textContent = countText;
+    if (globalLogsCountText) globalLogsCountText.textContent = countText;
+
+    const populateHistory = (feed) => {
+      if (!feed) return;
+      feed.innerHTML = '';
+      if (items.length === 0) {
+        feed.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 20px;">No match logs yet.</div>';
+        return;
+      }
+      items.forEach(item => {
+        const el = document.createElement('div');
+        el.className = `history-item item-${item.type}`;
+        let textContent = '';
+        let badge = '';
+
+        if (item.type === 'correct') {
+          badge = '<span style="color: #2ed573; font-weight: 700;">+1</span>';
+          textContent = item.compoundForm ? `<strong>${escapeHtml(item.word)}</strong> (${escapeHtml(item.compoundForm)})` : `<strong>${escapeHtml(item.word)}</strong>`;
+        } else if (item.type === 'incorrect') {
+          badge = '<span style="color: #a4b0be; font-weight: 700;">0</span>';
+          textContent = `<span style="text-decoration: line-through;">${escapeHtml(item.word)}</span> <span style="font-size: 0.75rem; color: #e74c3c;">(${escapeHtml(item.reason || 'Invalid')})</span>`;
+        } else {
+          badge = '<span style="color: #ff4757; font-weight: 700;">-1</span>';
+          textContent = `<em>${item.type === 'timeout' ? "Time's Up" : "Skipped"}</em>`;
+        }
+
+        el.innerHTML = `
+          <div style="display: flex; align-items: center; gap: 6px;">
+            <span>${item.playerEmoji || '👤'}</span>
+            <span>${textContent}</span>
+          </div>
+          <div>${badge}</div>
+        `;
+        feed.appendChild(el);
+      });
+    };
+
+    populateHistory(historyFeed);
+    populateHistory(arenaHistoryFeed);
+    populateHistory(globalHistoryFeed);
   }
 
-  // Primary View Navigation (Play Arena vs Used Words Tab)
+  // Primary View Navigation (Play Arena vs Match Logs vs Used Words Tab)
   function showArenaView() {
     if (navBtnGame) navBtnGame.classList.add('active');
+    if (navBtnLogs) navBtnLogs.classList.remove('active');
     if (navBtnBubbles) navBtnBubbles.classList.remove('active');
     if (viewGameArena) viewGameArena.style.display = 'grid';
+    if (viewLogsTab) viewLogsTab.style.display = 'none';
     if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'none';
+  }
+
+  function showLogsTabView() {
+    if (navBtnLogs) navBtnLogs.classList.add('active');
+    if (navBtnGame) navBtnGame.classList.remove('active');
+    if (navBtnBubbles) navBtnBubbles.classList.remove('active');
+    if (viewGameArena) viewGameArena.style.display = 'none';
+    if (viewLogsTab) viewLogsTab.style.display = 'block';
+    if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'none';
+    renderWordHistory();
   }
 
   function showUsedWordsTabView() {
     if (navBtnBubbles) navBtnBubbles.classList.add('active');
     if (navBtnGame) navBtnGame.classList.remove('active');
+    if (navBtnLogs) navBtnLogs.classList.remove('active');
     if (viewGameArena) viewGameArena.style.display = 'none';
+    if (viewLogsTab) viewLogsTab.style.display = 'none';
     if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'block';
     renderBubbles(cachedUsedWordsList, inputSearchBubbles ? inputSearchBubbles.value : '');
   }
@@ -568,6 +621,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navBtnGame) navBtnGame.addEventListener('click', () => {
     window.soundEngine.playClick();
     showArenaView();
+  });
+
+  if (navBtnLogs) navBtnLogs.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showLogsTabView();
   });
 
   if (navBtnBubbles) navBtnBubbles.addEventListener('click', () => {
@@ -580,31 +638,50 @@ document.addEventListener('DOMContentLoaded', () => {
     showArenaView();
   });
 
+  if (btnBackToArenaFromLogs) btnBackToArenaFromLogs.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showArenaView();
+  });
+
+  if (btnQuickViewLogs) btnQuickViewLogs.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showLogsTabView();
+  });
+
   if (btnQuickViewBubbles) btnQuickViewBubbles.addEventListener('click', () => {
     window.soundEngine.playClick();
     showUsedWordsTabView();
   });
 
-  // Sidebar Tab Switching (Scores vs Bubbles)
-  if (tabBtnScores && tabBtnBubbles) {
-    tabBtnScores.addEventListener('click', () => {
-      window.soundEngine.playClick();
-      tabBtnScores.classList.add('active');
-      tabBtnBubbles.classList.remove('active');
-      tabContentScores.style.display = 'block';
-      tabContentBubbles.style.display = 'none';
-    });
+  // Sidebar Tab Switching (Scores vs Logs vs Used Words)
+  function showSidebarTab(tabName) {
+    if (tabBtnScores) tabBtnScores.classList.toggle('active', tabName === 'scores');
+    if (tabBtnLogs) tabBtnLogs.classList.toggle('active', tabName === 'logs');
+    if (tabBtnBubbles) tabBtnBubbles.classList.toggle('active', tabName === 'bubbles');
 
-    tabBtnBubbles.addEventListener('click', () => {
-      window.soundEngine.playClick();
-      tabBtnBubbles.classList.add('active');
-      tabBtnScores.classList.remove('active');
-      tabContentScores.style.display = 'none';
-      tabContentBubbles.style.display = 'block';
-    });
+    if (tabContentScores) tabContentScores.style.display = tabName === 'scores' ? 'block' : 'none';
+    if (tabContentLogs) tabContentLogs.style.display = tabName === 'logs' ? 'block' : 'none';
+    if (tabContentBubbles) tabContentBubbles.style.display = tabName === 'bubbles' ? 'block' : 'none';
   }
 
-  // Global Tabs & Lobby Quick View Bubbles
+  if (tabBtnScores) tabBtnScores.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showSidebarTab('scores');
+  });
+
+  if (tabBtnLogs) tabBtnLogs.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showSidebarTab('logs');
+    renderWordHistory();
+  });
+
+  if (tabBtnBubbles) tabBtnBubbles.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showSidebarTab('bubbles');
+    renderBubbles();
+  });
+
+  // Global Tabs & Lobby Quick View (Game Arena vs Match Logs vs Used Words)
   if (globalTabGame) {
     globalTabGame.addEventListener('click', () => {
       window.soundEngine.playClick();
@@ -612,6 +689,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lastActiveScreen === screenGame) {
         showArenaView();
       }
+    });
+  }
+
+  if (globalTabLogs) {
+    globalTabLogs.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(screenLogs);
+      renderWordHistory();
     });
   }
 
@@ -623,11 +708,26 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  if (btnLobbyViewLogs) {
+    btnLobbyViewLogs.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(screenLogs);
+      renderWordHistory();
+    });
+  }
+
   if (btnLobbyViewBubbles) {
     btnLobbyViewBubbles.addEventListener('click', () => {
       window.soundEngine.playClick();
       switchScreen(screenUsedWords);
       renderBubbles();
+    });
+  }
+
+  if (btnBackFromGlobalLogs) {
+    btnBackFromGlobalLogs.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(lastActiveScreen || screenHome);
     });
   }
 

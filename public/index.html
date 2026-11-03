@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wordsend | Real-Time Word Chain Game</title>
-  <link rel="stylesheet" href="/css/style.css?v=3.2">
-  <link rel="stylesheet" href="/css/animations.css?v=3.2">
+  <link rel="stylesheet" href="/css/style.css?v=3.3">
+  <link rel="stylesheet" href="/css/animations.css?v=3.3">
 </head>
 <body>
   <div id="app">
@@ -16,6 +16,9 @@
     <nav class="app-global-nav" id="app-global-nav">
       <button id="global-tab-game" class="global-tab-btn active" type="button">
         🎮 Game Arena
+      </button>
+      <button id="global-tab-logs" class="global-tab-btn" type="button">
+        📜 Logs (<span class="global-logs-badge">0</span>)
       </button>
       <button id="global-tab-bubbles" class="global-tab-btn" type="button">
         🫧 Used Words Tab (<span class="global-used-words-badge">0</span>)
@@ -123,9 +126,14 @@
               <p id="lobby-start-hint" style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
                 Waiting for host to start (min 2 players)...
               </p>
-              <button id="btn-lobby-view-bubbles" class="btn-quick-bubbles" type="button" style="margin-top: 12px; width: 100%;">
-                🫧 Used Words Tab (<span class="global-used-words-badge">0</span>)
-              </button>
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button id="btn-lobby-view-logs" class="btn-quick-bubbles" type="button" style="border-color: #10ac84; background: #e8f8f5; color: #10ac84; flex: 1;">
+                  📜 Match Logs (<span class="global-logs-badge">0</span>)
+                </button>
+                <button id="btn-lobby-view-bubbles" class="btn-quick-bubbles" type="button" style="flex: 1;">
+                  🫧 Used Words (<span class="global-used-words-badge">0</span>)
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -163,6 +171,9 @@
         <div class="game-top-tabs">
           <button id="nav-btn-game" class="game-nav-tab active" type="button">
             🎮 Play Arena
+          </button>
+          <button id="nav-btn-logs" class="game-nav-tab" type="button">
+            📜 Match Logs (<span class="global-logs-badge">0</span>)
           </button>
           <button id="nav-btn-bubbles" class="game-nav-tab" type="button">
             🫧 Used Words Tab (<span id="top-used-words-badge" class="global-used-words-badge">0</span>)
@@ -225,27 +236,35 @@
                 Hint: Type a word that pairs with the base word!
               </div>
 
-              <!-- Shortcut pill to open Used Words Bubble Tab -->
-              <button id="btn-quick-view-bubbles" class="btn-quick-bubbles" type="button">
-                🫧 View Used Words in Bubbles (<span id="quick-used-words-badge" class="global-used-words-badge">0</span>)
-              </button>
+              <!-- Shortcut pills to open Logs & Used Words Bubble Tab -->
+              <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <button id="btn-quick-view-logs" class="btn-quick-bubbles" type="button" style="border-color: #10ac84; background: #e8f8f5; color: #10ac84; flex: 1;">
+                  📜 View Logs (<span class="global-logs-badge">0</span>)
+                </button>
+                <button id="btn-quick-view-bubbles" class="btn-quick-bubbles" type="button" style="flex: 1;">
+                  🫧 Used Words (<span id="quick-used-words-badge" class="global-used-words-badge">0</span>)
+                </button>
+              </div>
             </div>
           </div>
 
-          <!-- Sidebar: Scoreboard & Used Words Tabs -->
+          <!-- Sidebar: Scoreboard, Logs & Used Words Tabs -->
           <div class="game-sidebar">
             <!-- Tab Navigation Header -->
             <div class="sidebar-tabs-nav">
               <button id="tab-btn-scores" class="sidebar-tab-btn active" type="button">
                 🏆 Scores
               </button>
+              <button id="tab-btn-logs" class="sidebar-tab-btn" type="button">
+                📜 Logs <span id="sidebar-logs-badge" class="tab-badge global-logs-badge">0</span>
+              </button>
               <button id="tab-btn-bubbles" class="sidebar-tab-btn" type="button">
                 🫧 Used Words <span id="used-words-badge" class="tab-badge global-used-words-badge">0</span>
               </button>
             </div>
 
-            <!-- Tab 1: Leaderboard & Activity Feed -->
-            <div id="tab-content-scores" class="sidebar-tab-content active">
+            <!-- Tab 1: Leaderboard Standings -->
+            <div id="tab-content-scores" class="sidebar-tab-content">
               <div class="scoreboard-box">
                 <div class="box-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                   <h4 class="section-title" style="margin: 0;">🏆 Live Standings</h4>
@@ -255,17 +274,22 @@
                   <!-- Dynamically populated -->
                 </div>
               </div>
+            </div>
 
-              <!-- Chain Activity Feed -->
-              <div class="history-box" style="margin-top: 10px; max-height: 200px;">
-                <h4 class="section-title" style="margin-bottom: 8px;">📜 Chain Activity</h4>
-                <div id="history-feed" class="history-feed">
+            <!-- Tab 2: Chain Activity Logs -->
+            <div id="tab-content-logs" class="sidebar-tab-content" style="display: none;">
+              <div class="history-box">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                  <h4 class="section-title" style="margin: 0;">📜 Match Logs</h4>
+                  <span id="sidebar-logs-count" class="bubble-count-pill" style="background: #c8d6e5; color: #222f3e;">0 entries</span>
+                </div>
+                <div id="history-feed" class="history-feed" style="max-height: 280px;">
                   <!-- Dynamically populated -->
                 </div>
               </div>
             </div>
 
-            <!-- Tab 2: Sidebar Mini Bubble Container -->
+            <!-- Tab 3: Sidebar Pure Bubble Cloud (ONLY used words) -->
             <div id="tab-content-bubbles" class="sidebar-tab-content" style="display: none;">
               <div class="bubble-cloud-box">
                 <div class="bubble-cloud-header">
@@ -286,7 +310,30 @@
           </div>
         </div>
 
-        <!-- Dedicated Full-View Used Words Tab (Shows JUST the used words in bubbles) -->
+        <!-- Dedicated Full-View Match Logs Tab -->
+        <div id="view-logs-tab" class="used-words-tab-view" style="display: none;">
+          <div class="bubble-cloud-box" style="padding: 20px;">
+            <div class="bubble-cloud-header">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 class="section-title" style="margin: 0; font-size: 1.25rem;">📜 Match Activity Logs</h3>
+                <span id="arena-logs-count-text" class="bubble-count-pill" style="font-size: 0.85rem; padding: 4px 12px; background: #c8d6e5; color: #222f3e;">0 events</span>
+              </div>
+              <p style="margin: 0 0 14px; font-size: 0.85rem; color: var(--muted);">
+                Chronological log of moves, turns, scoring events (+1), skips, and timeouts.
+              </p>
+              <div style="display: flex; gap: 10px; margin-bottom: 6px;">
+                <button id="btn-back-to-arena-from-logs" class="btn-chunky btn-green" style="width: 100%; font-size: 0.88rem;" type="button">
+                  🎮 Back to Game Arena
+                </button>
+              </div>
+            </div>
+            <div id="arena-history-feed" class="history-feed" style="max-height: 440px;">
+              <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px;">No match logs yet!</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dedicated Full-View Used Words Tab (Shows ONLY the used words in bubbles) -->
         <div id="view-used-words-tab" class="used-words-tab-view" style="display: none;">
           <div class="bubble-cloud-box" style="padding: 20px;">
             <div class="bubble-cloud-header">
@@ -380,13 +427,39 @@
       </div>
     </div>
 
+    <!-- 6. UNIVERSAL MATCH LOGS SCREEN -->
+    <div id="screen-logs" class="screen">
+      <div class="game-card used-words-card">
+        <div class="bubble-cloud-header">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.5rem;">📜</span>
+              <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">Match Activity Logs</h2>
+            </div>
+            <span id="global-logs-count-text" class="bubble-count-pill" style="font-size: 0.85rem; padding: 4px 12px; background: #c8d6e5; color: #222f3e;">0 events</span>
+          </div>
+          <p style="margin: 0 0 16px; font-size: 0.88rem; color: var(--muted);">
+            Live chronological feed of all turns, accepted compounds (+1), penalties, and skips.
+          </p>
+          <div style="display: flex; gap: 10px; margin-bottom: 12px;">
+            <button id="btn-back-from-global-logs" class="btn-chunky btn-green" style="width: 100%; font-size: 0.9rem;" type="button">
+              ⬅️ Back to Game
+            </button>
+          </div>
+        </div>
+        <div id="global-history-feed" class="history-feed" style="max-height: 440px;">
+          <div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 24px;">No match logs yet!</div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating reactions container -->
     <div id="reactions-container"></div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/audio.js?v=3.2"></script>
-  <script src="/js/confetti.js?v=3.2"></script>
-  <script src="/js/app.js?v=3.2"></script>
+  <script src="/js/audio.js?v=3.3"></script>
+  <script src="/js/confetti.js?v=3.3"></script>
+  <script src="/js/app.js?v=3.3"></script>
 </body>
 </html>
