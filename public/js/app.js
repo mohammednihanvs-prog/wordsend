@@ -36,15 +36,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const lobbyStartHint = document.getElementById('lobby-start-hint');
   const btnMuteLobby = document.getElementById('btn-mute-toggle-lobby');
 
-  // DOM Elements - Sidebar Tabs & Used Words
+  // DOM Elements - Sidebar Tabs & Used Words Bubbles
   const tabBtnScores = document.getElementById('tab-btn-scores');
-  const tabBtnUsedWords = document.getElementById('tab-btn-used-words');
+  const tabBtnBubbles = document.getElementById('tab-btn-bubbles');
   const tabContentScores = document.getElementById('tab-content-scores');
-  const tabContentUsedWords = document.getElementById('tab-content-used-words');
+  const tabContentBubbles = document.getElementById('tab-content-bubbles');
   const usedWordsBadge = document.getElementById('used-words-badge');
-  const usedWordsSummary = document.getElementById('used-words-summary');
-  const inputSearchUsedWords = document.getElementById('input-search-used-words');
-  const usedWordsChips = document.getElementById('used-words-chips');
+  const bubblesCountText = document.getElementById('bubbles-count-text');
+  const inputSearchBubbles = document.getElementById('input-search-bubbles');
+  const usedWordsBubbles = document.getElementById('used-words-bubbles');
   const targetScoreHint = document.getElementById('target-score-hint');
 
   // DOM Elements - Game
@@ -407,9 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       renderScoreboard(state.players, state.currentTurnPlayerId, state.settings.winningScore);
 
-      // Update Word History Feed & Used Words Chips
+      // Update Word History Feed & Used Words Bubbles
       renderWordHistory(state.wordHistory);
-      renderUsedWords(state.usedWordsList, inputSearchUsedWords ? inputSearchUsedWords.value : '');
+      renderBubbles(state.usedWordsList, inputSearchBubbles ? inputSearchBubbles.value : '');
     }
 
     // 3. Game Over State Update
@@ -514,60 +514,76 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Sidebar Tab Switching
-  if (tabBtnScores && tabBtnUsedWords) {
+  // Sidebar Tab Switching (Scores vs Bubbles)
+  if (tabBtnScores && tabBtnBubbles) {
     tabBtnScores.addEventListener('click', () => {
       window.soundEngine.playClick();
       tabBtnScores.classList.add('active');
-      tabBtnUsedWords.classList.remove('active');
+      tabBtnBubbles.classList.remove('active');
       tabContentScores.style.display = 'block';
-      tabContentUsedWords.style.display = 'none';
+      tabContentBubbles.style.display = 'none';
     });
 
-    tabBtnUsedWords.addEventListener('click', () => {
+    tabBtnBubbles.addEventListener('click', () => {
       window.soundEngine.playClick();
-      tabBtnUsedWords.classList.add('active');
+      tabBtnBubbles.classList.add('active');
       tabBtnScores.classList.remove('active');
       tabContentScores.style.display = 'none';
-      tabContentUsedWords.style.display = 'block';
+      tabContentBubbles.style.display = 'block';
     });
   }
 
-  // Used Words Chips & Search
+  // Used Words Bubbles Rendering & Search
   let cachedUsedWordsList = [];
 
-  function renderUsedWords(usedWordsList, searchTerm = '') {
+  function renderBubbles(usedWordsList, searchTerm = '') {
     if (usedWordsList) cachedUsedWordsList = usedWordsList;
     const list = cachedUsedWordsList || [];
 
     if (usedWordsBadge) usedWordsBadge.textContent = list.length;
-    if (usedWordsSummary) usedWordsSummary.textContent = `${list.length} used`;
+    if (bubblesCountText) bubblesCountText.textContent = `${list.length} word${list.length === 1 ? '' : 's'}`;
 
-    if (!usedWordsChips) return;
-    usedWordsChips.innerHTML = '';
+    if (!usedWordsBubbles) return;
+    usedWordsBubbles.innerHTML = '';
 
     if (list.length === 0) {
-      usedWordsChips.innerHTML = '<span class="no-words-hint">No words played yet</span>';
+      usedWordsBubbles.innerHTML = `
+        <div class="empty-bubbles-state">
+          <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🫧</span>
+          <p style="margin: 0; font-size: 0.85rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
+          <span style="font-size: 0.75rem; color: #a4b0be;">Played words will appear in bubbles here.</span>
+        </div>
+      `;
       return;
     }
 
     const term = (searchTerm || '').trim().toLowerCase();
     const sorted = [...new Set(list)].sort();
+    let matchCount = 0;
 
-    sorted.forEach(word => {
-      const chip = document.createElement('span');
-      chip.className = 'used-word-chip';
-      if (term && word.includes(term)) {
-        chip.classList.add('highlight-match');
+    sorted.forEach((word, idx) => {
+      const isMatch = term ? word.toLowerCase().includes(term) : true;
+      if (!isMatch) return;
+      matchCount++;
+
+      const bubble = document.createElement('div');
+      bubble.className = `word-bubble word-bubble-${idx % 8}`;
+      if (term && word.toLowerCase().includes(term)) {
+        bubble.classList.add('highlight-match');
       }
-      chip.textContent = word;
-      usedWordsChips.appendChild(chip);
+      bubble.innerHTML = `<span>🫧</span><span>${escapeHtml(word)}</span>`;
+      bubble.title = `Used word: "${word}" (cannot be played again)`;
+      usedWordsBubbles.appendChild(bubble);
     });
+
+    if (matchCount === 0 && list.length > 0) {
+      usedWordsBubbles.innerHTML = `<span style="font-size: 0.8rem; color: var(--muted); padding: 20px;">No bubbles match "${escapeHtml(searchTerm)}"</span>`;
+    }
   }
 
-  if (inputSearchUsedWords) {
-    inputSearchUsedWords.addEventListener('input', () => {
-      renderUsedWords(null, inputSearchUsedWords.value);
+  if (inputSearchBubbles) {
+    inputSearchBubbles.addEventListener('input', () => {
+      renderBubbles(null, inputSearchBubbles.value);
     });
   }
 

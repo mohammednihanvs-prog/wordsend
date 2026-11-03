@@ -211,12 +211,12 @@
               <button id="tab-btn-scores" class="sidebar-tab-btn active" type="button">
                 🏆 Scores
               </button>
-              <button id="tab-btn-used-words" class="sidebar-tab-btn" type="button">
-                📚 Used Words <span id="used-words-badge" class="tab-badge">0</span>
+              <button id="tab-btn-bubbles" class="sidebar-tab-btn" type="button">
+                🫧 Used Words <span id="used-words-badge" class="tab-badge">0</span>
               </button>
             </div>
 
-            <!-- Tab 1: Leaderboard -->
+            <!-- Tab 1: Leaderboard & Activity Feed -->
             <div id="tab-content-scores" class="sidebar-tab-content active">
               <div class="scoreboard-box">
                 <div class="box-header-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -227,35 +227,33 @@
                   <!-- Dynamically populated -->
                 </div>
               </div>
+
+              <!-- Chain Activity Feed -->
+              <div class="history-box" style="margin-top: 10px; max-height: 200px;">
+                <h4 class="section-title" style="margin-bottom: 8px;">📜 Chain Activity</h4>
+                <div id="history-feed" class="history-feed">
+                  <!-- Dynamically populated -->
+                </div>
+              </div>
             </div>
 
-            <!-- Tab 2: Used Words Panel -->
-            <div id="tab-content-used-words" class="sidebar-tab-content" style="display: none;">
-              <div class="history-box used-words-panel">
-                <div class="used-words-header" style="margin-bottom: 12px;">
+            <!-- Tab 2: Used Words Bubble Cloud (Shows JUST the used words in bubbles) -->
+            <div id="tab-content-bubbles" class="sidebar-tab-content" style="display: none;">
+              <div class="bubble-cloud-box">
+                <div class="bubble-cloud-header">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                    <h4 class="section-title" style="margin: 0;">📚 Used Words</h4>
-                    <span id="used-words-summary" style="font-size: 0.75rem; font-weight: 700; color: #36ab79;">0 used</span>
+                    <h4 class="section-title" style="margin: 0;">🫧 Used Words</h4>
+                    <span id="bubbles-count-text" class="bubble-count-pill">0 words</span>
                   </div>
-                  <!-- Search / Filter input -->
-                  <div class="used-words-search-wrap">
-                    <input type="text" id="input-search-used-words" class="input-used-search" placeholder="🔍 Search used words..." autocomplete="off">
-                  </div>
+                  <input type="text" id="input-search-bubbles" class="input-bubble-search" placeholder="🔍 Search used words..." autocomplete="off">
                 </div>
 
-                <!-- Chips container showing every word used in this match -->
-                <div class="used-words-chips-section">
-                  <div class="used-chips-label">ALREADY PLAYED (CANNOT REPEAT):</div>
-                  <div id="used-words-chips" class="used-words-chips-grid">
-                    <span class="no-words-hint">No words played yet</span>
-                  </div>
-                </div>
-
-                <!-- Detailed turn chain history -->
-                <div class="used-chain-section" style="margin-top: 14px;">
-                  <div class="used-chips-label">CHAIN HISTORY:</div>
-                  <div id="history-feed" class="history-feed">
-                    <!-- Dynamically populated -->
+                <!-- Pure Bubble Cloud: Just the used words in bubbles -->
+                <div id="used-words-bubbles" class="bubbles-playground">
+                  <div class="empty-bubbles-state">
+                    <span style="font-size: 2.2rem; display: block; margin-bottom: 6px;">🫧</span>
+                    <p style="margin: 0; font-size: 0.85rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
+                    <span style="font-size: 0.75rem; color: #a4b0be;">Played words will appear in bubbles here.</span>
                   </div>
                 </div>
               </div>

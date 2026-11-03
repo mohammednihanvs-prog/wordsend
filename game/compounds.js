@@ -20,7 +20,7 @@ const KNOWN_COMPOUNDS = [
   'bedsheet', 'bedside', 'bedspread', 'bedtime', 'beehive', 'beekeeper', 'bellboy',
   'bellhop', 'belowground', 'billboard', 'billfold', 'birdbath', 'birdcage', 'birdeye',
   'birdfeeder', 'birdhouse', 'birdseed', 'birdsong', 'birthdate', 'birthday', 'birthmark',
-  'birthplace', 'blackberry', 'blackboard', 'blackhole', 'blackjack', 'blacklist',
+  'birthplace', 'blackberry', 'blackboard', 'blackhole', 'black hole', 'blackjack', 'blacklist',
   'blackmail', 'blackout', 'blacksmith', 'blacktop', 'bloodhound', 'bloodstream',
   'blowdryer', 'blowfish', 'blowtorch', 'blueberry', 'bluebird', 'bluegrass', 'bluejeans',
   'blueprint', 'bluetooth', 'boardgame', 'boardroom', 'boardwalk', 'boathouse', 'bodyguard',
@@ -57,6 +57,7 @@ const KNOWN_COMPOUNDS = [
   'dogleash', 'dogwalker', 'dollhouse', 'doorbell', 'doorframe', 'doorknob', 'doormat',
   'doorman', 'doorstep', 'doorstop', 'doorway', 'doughnut', 'downfall', 'downhill',
   'download', 'downpour', 'downstairs', 'downstream', 'downtown', 'downtime', 'downward',
+  'downsyndrome', 'down syndrome',
   'downwind', 'dragonfly', 'drawback', 'drawbridge', 'dreamland', 'dressingroom',
   'driftwood', 'drivein', 'driveway', 'dropoff', 'drumstick', 'duckbill', 'dustpan',
 
@@ -105,19 +106,19 @@ const KNOWN_COMPOUNDS = [
   'hardwork', 'harvesttime', 'hatbox', 'hayfork', 'hayloft', 'haystack', 'headache',
   'headband', 'headboard', 'headgear', 'headlight', 'headline', 'headlock', 'headmaster',
   'headphone', 'headphones', 'headrest', 'headroom', 'headset', 'headshot', 'headstart',
-  'headstrong', 'headwaiter', 'headway', 'heartattack', 'heartbeat', 'heartbreak',
+  'headstrong', 'headwaiter', 'headway', 'heartattack', 'heart attack', 'heartbeat', 'heartbreak',
   'heartburn', 'heartfelt', 'heartland', 'heirloom', 'hellcat', 'helicopter', 'helpline',
   'highchair', 'highland', 'highlight', 'highroad', 'highschool', 'highscore', 'highway',
   'hillside', 'hilltop', 'hobnail', 'holiday', 'homebase', 'homebody', 'homecoming',
   'homeland', 'homemade', 'homeowner', 'homepage', 'homeroom', 'homerun', 'homesick',
   'homespun', 'homestead', 'hometown', 'homework', 'honeybee', 'honeycomb', 'honeydew',
   'honeymoon', 'honeysuckle', 'hookworm', 'horseback', 'horsefly', 'horsepower', 'horseshoe',
-  'horseradish', 'hotcake', 'hotdog', 'hotelroom', 'hothouse', 'hotplate', 'hotpot',
+  'horseradish', 'hotcake', 'hotdog', 'hot dog', 'hotelroom', 'hothouse', 'hotplate', 'hotpot',
   'hourglass', 'houseboat', 'housefly', 'household', 'housekeeper', 'housemaid', 'housewife',
   'housework',
 
   // --- I ---
-  'iceberg', 'icebox', 'icecap', 'icecream', 'icecube', 'icedtea', 'iceskate', 'icestorm',
+  'iceberg', 'icebox', 'icecap', 'icecream', 'ice cream', 'icecube', 'ice cube', 'icedtea', 'iceskate', 'icestorm',
   'inchworm', 'income', 'inkblot', 'inkpad', 'inkwell', 'inland', 'inlaw', 'inlet',
   'inmate', 'inpatient', 'input', 'inside', 'insight', 'instep', 'intake', 'ironclad',
   'ironman', 'ironware', 'ironwork', 'island',
@@ -217,7 +218,7 @@ const KNOWN_COMPOUNDS = [
   'riverbank', 'riverbed', 'riverboat', 'riverside', 'roadbed', 'roadblock',
   'roadkill', 'roadmap', 'roadrunner', 'roadside', 'roadsign', 'roadtrip', 'roadway',
   'roadwork', 'rockbottom', 'rockclimber', 'rocketship', 'rockingchair', 'rockslide',
-  'rockstar', 'rollercoaster', 'rollerskate', 'rooftop', 'roommate', 'roomservice',
+  'rockstar', 'rollercoaster', 'roller coaster', 'rollerskate', 'rooftop', 'roommate', 'roomservice',
   'roundabout', 'roundhouse', 'rowboat', 'runaway', 'runway',
 
   // --- S ---

@@ -1,5 +1,5 @@
 // Fast In-Memory Offline English Dictionary & Word Chain Validator
-// Enhanced with Dynamic Wiktionary & Open Compound Resolution
+// Enhanced with Dynamic Wiktionary, Wikipedia OpenSearch & Datamuse Resolution
 
 const rawWords = require('an-array-of-english-words');
 const config = require('../config');
@@ -12,11 +12,16 @@ const dictionarySet = new Set(rawWords.map(w => w.toLowerCase()));
 // Supplemental common compound words/collocations to make play smooth
 const compoundSet = new Set(KNOWN_COMPOUNDS.map(w => w.toLowerCase()));
 for (const word of compoundSet) {
-  dictionarySet.add(word);
+  dictionarySet.add(word.replace(/[^a-z]/g, ''));
 }
 
 // In-memory dynamic cache for words verified during runtime
 const dynamicVerifiedCompounds = new Map();
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
 
 /**
  * Checks Wiktionary for a batch of phrase titles in a single HTTP request.
@@ -26,7 +31,7 @@ const dynamicVerifiedCompounds = new Map();
 function queryDynamicWiktionary(phrases) {
   return new Promise((resolve) => {
     if (!phrases || phrases.length === 0) return resolve(new Set());
-    const validPhrases = phrases.filter(p => p && p.length >= 3);
+    const validPhrases = phrases.filter(p => p && p.length >= 2);
     if (validPhrases.length === 0) return resolve(new Set());
 
     const titles = validPhrases.map(p => encodeURIComponent(p)).join('|');
@@ -65,6 +70,85 @@ function queryDynamicWiktionary(phrases) {
 }
 
 /**
+ * Checks Wikipedia OpenSearch for phrase or compound concepts.
+ * @param {string} query
+ * @returns {Promise<string|null>}
+ */
+function queryWikipediaOpenSearch(query) {
+  return new Promise((resolve) => {
+    if (!query || query.length < 3) return resolve(null);
+    const url = `https://en.wikipedia.org/w/api.php?action=opensearch&search=${encodeURIComponent(query)}&limit=1&format=json`;
+
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'WordsendApp/2.0 (realtime word chain game)' },
+      timeout: 1600
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const json = JSON.parse(data);
+          const results = json[1] || [];
+          if (results.length > 0) {
+            const first = results[0].toLowerCase();
+            const cleanQ = query.toLowerCase().replace(/[^a-z]/g, '');
+            const cleanF = first.replace(/[^a-z]/g, '');
+            if (cleanF === cleanQ || cleanF.startsWith(cleanQ) || first.includes(query.toLowerCase())) {
+              return resolve(results[0]);
+            }
+          }
+          resolve(null);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(null);
+    });
+  });
+}
+
+/**
+ * Checks Datamuse for natural English word collocations.
+ * @param {string} first
+ * @param {string} second
+ * @returns {Promise<boolean>}
+ */
+function queryDatamuseCollocation(first, second) {
+  return new Promise((resolve) => {
+    if (!first || !second) return resolve(false);
+    const url = `https://api.datamuse.com/words?rel_bga=${encodeURIComponent(first)}&max=200`;
+
+    const req = https.get(url, {
+      headers: { 'User-Agent': 'WordsendApp/2.0' },
+      timeout: 1500
+    }, (res) => {
+      let data = '';
+      res.on('data', c => data += c);
+      res.on('end', () => {
+        try {
+          const list = JSON.parse(data);
+          const hasWord = Array.isArray(list) && list.some(item => item.word && item.word.toLowerCase() === second.toLowerCase());
+          resolve(hasWord);
+        } catch {
+          resolve(false);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(false));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(false);
+    });
+  });
+}
+
+/**
  * Validates a submitted word against game rules and the current base word for compound word chaining.
  *
  * @param {string} rawInput - The user submitted word
@@ -77,8 +161,8 @@ async function validateWord(rawInput, baseWord, usedWords) {
     return { valid: false, reason: 'Please enter a word.', cleanWord: '' };
   }
 
-  // Clean input: lowercase and remove any stray punctuation/spaces
-  const clean = rawInput.trim().toLowerCase().replace(/[^a-z]/g, '');
+  const rawClean = rawInput.trim().toLowerCase();
+  const clean = rawClean.replace(/[^a-z]/g, '');
   const base = (baseWord || '').trim().toLowerCase().replace(/[^a-z]/g, '');
 
   if (clean.length === 0) {
@@ -96,15 +180,70 @@ async function validateWord(rawInput, baseWord, usedWords) {
   }
 
   // 3. Must not be already used in this match
-  if (usedWords && usedWords.has(clean)) {
+  if (usedWords && (usedWords.has(clean) || usedWords.has(rawClean))) {
     return { valid: false, reason: `"${clean}" was already played in this game!`, cleanWord: clean };
   }
 
   // 4. Compound Word Verification
   if (base) {
+    // --- Step 0: Check if player entered the full compound (e.g. "heart attack" or "downsyndrome") ---
+    if (rawClean.includes(' ') || clean.length > base.length) {
+      // Forward prefix check: starts with base
+      if (rawClean.startsWith(base + ' ')) {
+        const wordPart = rawClean.slice(base.length + 1).trim().replace(/[^a-z]/g, '');
+        if (wordPart.length >= config.RULES.MIN_WORD_LENGTH) {
+          return {
+            valid: true,
+            cleanWord: wordPart,
+            compoundWord: `${base} ${wordPart}`,
+            compoundForm: `${base} + ${wordPart} = ${base} ${wordPart}`
+          };
+        }
+      }
+      if (clean.startsWith(base) && clean.length > base.length) {
+        const wordPart = clean.slice(base.length);
+        if (wordPart.length >= config.RULES.MIN_WORD_LENGTH) {
+          const formName = `${base} + ${wordPart} = ${clean}`;
+          return {
+            valid: true,
+            cleanWord: wordPart,
+            compoundWord: clean,
+            compoundForm: formName
+          };
+        }
+      }
+
+      // Backward suffix check: ends with base
+      if (rawClean.endsWith(' ' + base)) {
+        const wordPart = rawClean.slice(0, rawClean.length - (base.length + 1)).trim().replace(/[^a-z]/g, '');
+        if (wordPart.length >= config.RULES.MIN_WORD_LENGTH) {
+          return {
+            valid: true,
+            cleanWord: wordPart,
+            compoundWord: `${wordPart} ${base}`,
+            compoundForm: `${wordPart} + ${base} = ${wordPart} ${base}`
+          };
+        }
+      }
+      if (clean.endsWith(base) && clean.length > base.length) {
+        const wordPart = clean.slice(0, clean.length - base.length);
+        if (wordPart.length >= config.RULES.MIN_WORD_LENGTH) {
+          const formName = `${wordPart} + ${base} = ${clean}`;
+          return {
+            valid: true,
+            cleanWord: wordPart,
+            compoundWord: clean,
+            compoundForm: formName
+          };
+        }
+      }
+    }
+
     // --- Step A: Fast In-Memory Check (0ms) ---
     const forwardClosed = base + clean;
-    if ((dictionarySet.has(forwardClosed) || compoundSet.has(forwardClosed)) && (!usedWords || !usedWords.has(forwardClosed))) {
+    const forwardOpen = `${base} ${clean}`;
+    if ((dictionarySet.has(forwardClosed) || compoundSet.has(forwardClosed) || compoundSet.has(forwardOpen)) &&
+        (!usedWords || (!usedWords.has(forwardClosed) && !usedWords.has(forwardOpen)))) {
       return {
         valid: true,
         cleanWord: clean,
@@ -114,7 +253,9 @@ async function validateWord(rawInput, baseWord, usedWords) {
     }
 
     const backwardClosed = clean + base;
-    if ((dictionarySet.has(backwardClosed) || compoundSet.has(backwardClosed)) && (!usedWords || !usedWords.has(backwardClosed))) {
+    const backwardOpen = `${clean} ${base}`;
+    if ((dictionarySet.has(backwardClosed) || compoundSet.has(backwardClosed) || compoundSet.has(backwardOpen)) &&
+        (!usedWords || (!usedWords.has(backwardClosed) && !usedWords.has(backwardOpen)))) {
       return {
         valid: true,
         cleanWord: clean,
@@ -123,39 +264,7 @@ async function validateWord(rawInput, baseWord, usedWords) {
       };
     }
 
-    // Check if player entered the full compound word itself: e.g. "baseball" when base is "base"
-    if (clean.startsWith(base) && clean.length > base.length) {
-      const suffix = clean.slice(base.length);
-      if (suffix.length >= config.RULES.MIN_WORD_LENGTH) {
-        if ((dictionarySet.has(clean) || compoundSet.has(clean) || dictionarySet.has(suffix)) &&
-            (!usedWords || (!usedWords.has(suffix) && !usedWords.has(clean)))) {
-          return {
-            valid: true,
-            cleanWord: suffix,
-            compoundWord: clean,
-            compoundForm: `${base} + ${suffix} = ${clean}`
-          };
-        }
-      }
-    }
-
-    // e.g. "football" when base is "ball"
-    if (clean.endsWith(base) && clean.length > base.length) {
-      const prefix = clean.slice(0, clean.length - base.length);
-      if (prefix.length >= config.RULES.MIN_WORD_LENGTH) {
-        if ((dictionarySet.has(clean) || compoundSet.has(clean) || dictionarySet.has(prefix)) &&
-            (!usedWords || (!usedWords.has(prefix) && !usedWords.has(clean)))) {
-          return {
-            valid: true,
-            cleanWord: prefix,
-            compoundWord: clean,
-            compoundForm: `${prefix} + ${base} = ${clean}`
-          };
-        }
-      }
-    }
-
-    // Check in-memory dynamic cache from prior queries
+    // Check in-memory dynamic cache from prior lookups
     const cacheKeyFwd = `${base}_${clean}`;
     if (dynamicVerifiedCompounds.has(cacheKeyFwd)) {
       const info = dynamicVerifiedCompounds.get(cacheKeyFwd);
@@ -177,40 +286,43 @@ async function validateWord(rawInput, baseWord, usedWords) {
       cleanSingularEs = clean.slice(0, -2);
     }
 
-    // --- Step C: Dynamic Live Wiktionary Lookup ---
+    // --- Step C: Dynamic Live Wiktionary Lookup (with title-case support) ---
     const candidateOpenFwd = `${base} ${clean}`;
     const candidateOpenBwd = `${clean} ${base}`;
+    const candidateOpenFwdCap = `${capitalize(base)} ${clean}`;
+    const candidateOpenBwdCap = `${capitalize(clean)} ${base}`;
     const candidateOpenFwdSingular = cleanSingular ? `${base} ${cleanSingular}` : '';
     const candidateOpenBwdSingular = cleanSingular ? `${cleanSingular} ${base}` : '';
-    const candidateOpenFwdEs = cleanSingularEs ? `${base} ${cleanSingularEs}` : '';
+    const candidateOpenFwdSingularCap = cleanSingular ? `${capitalize(base)} ${cleanSingular}` : '';
 
     const batch = [
       candidateOpenFwd,
       candidateOpenBwd,
+      candidateOpenFwdCap,
+      candidateOpenBwdCap,
       forwardClosed,
       backwardClosed,
       candidateOpenFwdSingular,
       candidateOpenBwdSingular,
-      candidateOpenFwdEs
+      candidateOpenFwdSingularCap
     ].filter(Boolean);
 
     try {
       const matchedSet = await queryDynamicWiktionary(batch);
 
       // Check Forward matches
-      if (matchedSet.has(candidateOpenFwd) || matchedSet.has(forwardClosed) ||
-          (candidateOpenFwdSingular && matchedSet.has(candidateOpenFwdSingular)) ||
-          (candidateOpenFwdEs && matchedSet.has(candidateOpenFwdEs))) {
+      if (matchedSet.has(candidateOpenFwd) || matchedSet.has(candidateOpenFwdCap) ||
+          matchedSet.has(forwardClosed) ||
+          (candidateOpenFwdSingular && (matchedSet.has(candidateOpenFwdSingular) || matchedSet.has(candidateOpenFwdSingularCap)))) {
         const title = matchedSet.has(candidateOpenFwd) ? candidateOpenFwd
+          : matchedSet.has(candidateOpenFwdCap) ? candidateOpenFwdCap
           : matchedSet.has(forwardClosed) ? forwardClosed
-          : candidateOpenFwdSingular && matchedSet.has(candidateOpenFwdSingular) ? candidateOpenFwdSingular
-          : candidateOpenFwdEs;
+          : candidateOpenFwdSingular;
         const form = `${base} + ${clean} = ${title}`;
 
-        // Cache dynamically for instant 0ms on repeat
         dynamicVerifiedCompounds.set(cacheKeyFwd, { compoundWord: title, compoundForm: form });
         compoundSet.add(forwardClosed);
-        dictionarySet.add(forwardClosed);
+        compoundSet.add(candidateOpenFwd);
         dictionarySet.add(clean);
 
         return {
@@ -222,16 +334,18 @@ async function validateWord(rawInput, baseWord, usedWords) {
       }
 
       // Check Backward matches
-      if (matchedSet.has(candidateOpenBwd) || matchedSet.has(backwardClosed) ||
+      if (matchedSet.has(candidateOpenBwd) || matchedSet.has(candidateOpenBwdCap) ||
+          matchedSet.has(backwardClosed) ||
           (candidateOpenBwdSingular && matchedSet.has(candidateOpenBwdSingular))) {
         const title = matchedSet.has(candidateOpenBwd) ? candidateOpenBwd
+          : matchedSet.has(candidateOpenBwdCap) ? candidateOpenBwdCap
           : matchedSet.has(backwardClosed) ? backwardClosed
           : candidateOpenBwdSingular;
         const form = `${clean} + ${base} = ${title}`;
 
         dynamicVerifiedCompounds.set(cacheKeyBwd, { compoundWord: title, compoundForm: form });
         compoundSet.add(backwardClosed);
-        dictionarySet.add(backwardClosed);
+        compoundSet.add(candidateOpenBwd);
         dictionarySet.add(clean);
 
         return {
@@ -242,11 +356,102 @@ async function validateWord(rawInput, baseWord, usedWords) {
         };
       }
     } catch {
-      // Ignore network errors and continue to local fallback
+      // Ignore network errors and continue
     }
 
-    // --- Step D: Informative Rejection ---
-    if (!dictionarySet.has(clean) && !cleanSingular) {
+    // --- Step D: Wikipedia OpenSearch Resolution ---
+    try {
+      const wikiFwd = await queryWikipediaOpenSearch(candidateOpenFwd);
+      if (wikiFwd) {
+        const form = `${base} + ${clean} = ${wikiFwd}`;
+        dynamicVerifiedCompounds.set(cacheKeyFwd, { compoundWord: wikiFwd, compoundForm: form });
+        compoundSet.add(forwardClosed);
+        compoundSet.add(candidateOpenFwd);
+        dictionarySet.add(clean);
+        return {
+          valid: true,
+          cleanWord: clean,
+          compoundWord: wikiFwd,
+          compoundForm: form
+        };
+      }
+
+      const wikiBwd = await queryWikipediaOpenSearch(candidateOpenBwd);
+      if (wikiBwd) {
+        const form = `${clean} + ${base} = ${wikiBwd}`;
+        dynamicVerifiedCompounds.set(cacheKeyBwd, { compoundWord: wikiBwd, compoundForm: form });
+        compoundSet.add(backwardClosed);
+        compoundSet.add(candidateOpenBwd);
+        dictionarySet.add(clean);
+        return {
+          valid: true,
+          cleanWord: clean,
+          compoundWord: wikiBwd,
+          compoundForm: form
+        };
+      }
+    } catch {}
+
+    // --- Step E: Datamuse Collocation Check ---
+    try {
+      const isDatamuseFwd = await queryDatamuseCollocation(base, clean);
+      if (isDatamuseFwd) {
+        const title = `${base} ${clean}`;
+        const form = `${base} + ${clean} = ${title}`;
+        dynamicVerifiedCompounds.set(cacheKeyFwd, { compoundWord: title, compoundForm: form });
+        compoundSet.add(forwardClosed);
+        compoundSet.add(title);
+        dictionarySet.add(clean);
+        return {
+          valid: true,
+          cleanWord: clean,
+          compoundWord: title,
+          compoundForm: form
+        };
+      }
+
+      const isDatamuseBwd = await queryDatamuseCollocation(clean, base);
+      if (isDatamuseBwd) {
+        const title = `${clean} ${base}`;
+        const form = `${clean} + ${base} = ${title}`;
+        dynamicVerifiedCompounds.set(cacheKeyBwd, { compoundWord: title, compoundForm: form });
+        compoundSet.add(backwardClosed);
+        compoundSet.add(title);
+        dictionarySet.add(clean);
+        return {
+          valid: true,
+          cleanWord: clean,
+          compoundWord: title,
+          compoundForm: form
+        };
+      }
+    } catch {}
+
+    // --- Step F: Noun-Noun Adjunct Pair Heuristic ("dont limit to a dictionary") ---
+    // If both words are recognized English words (>= 2 letters) and not stopwords:
+    const commonStopwords = new Set([
+      'the', 'and', 'for', 'with', 'from', 'that', 'this', 'have', 'were', 'been',
+      'they', 'what', 'when', 'then', 'than', 'into', 'just', 'more', 'some', 'such'
+    ]);
+
+    if (dictionarySet.has(clean) && !commonStopwords.has(clean) && clean.length >= 3) {
+      // Both words are valid English words! Accept as natural noun compound:
+      const title = `${base} ${clean}`;
+      const form = `${base} + ${clean} = ${title}`;
+      dynamicVerifiedCompounds.set(cacheKeyFwd, { compoundWord: title, compoundForm: form });
+      compoundSet.add(forwardClosed);
+      compoundSet.add(title);
+
+      return {
+        valid: true,
+        cleanWord: clean,
+        compoundWord: title,
+        compoundForm: form
+      };
+    }
+
+    // --- Informative Rejection for gibberish ---
+    if (!dictionarySet.has(clean)) {
       return {
         valid: false,
         reason: `"${clean}" is not in the dictionary.`,
@@ -256,7 +461,7 @@ async function validateWord(rawInput, baseWord, usedWords) {
 
     return {
       valid: false,
-      reason: `"${clean}" does not form a compound word with "${baseWord}".`,
+      reason: `"${clean}" does not pair with "${baseWord}".`,
       cleanWord: clean
     };
   }
