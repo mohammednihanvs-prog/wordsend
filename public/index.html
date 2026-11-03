@@ -4,24 +4,27 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Wordsend | Real-Time Word Chain Game</title>
-  <link rel="stylesheet" href="/css/style.css?v=3.3">
-  <link rel="stylesheet" href="/css/animations.css?v=3.3">
+  <link rel="stylesheet" href="/css/style.css?v=3.4">
+  <link rel="stylesheet" href="/css/animations.css?v=3.4">
 </head>
 <body>
   <div id="app">
     <!-- SYSTEM BANNER FOR NOTIFICATIONS / ANTI-STALL -->
     <div id="system-banner" class="system-banner" style="display: none;"></div>
 
-    <!-- UNIVERSAL TOP TAB BAR (Always visible & accessible) -->
+    <!-- UNIVERSAL TOP TAB BAR (4 Tabs - Always visible & accessible) -->
     <nav class="app-global-nav" id="app-global-nav">
       <button id="global-tab-game" class="global-tab-btn active" type="button">
-        🎮 Game Arena
+        🎮 1. Arena
+      </button>
+      <button id="global-tab-scores" class="global-tab-btn" type="button">
+        🏆 2. Scores
       </button>
       <button id="global-tab-logs" class="global-tab-btn" type="button">
-        📜 Logs (<span class="global-logs-badge">0</span>)
+        📜 3. Logs (<span class="global-logs-badge">0</span>)
       </button>
       <button id="global-tab-bubbles" class="global-tab-btn" type="button">
-        🫧 Used Words Tab (<span class="global-used-words-badge">0</span>)
+        🫧 4. Word Bubbles (<span class="global-used-words-badge">0</span>)
       </button>
     </nav>
 
@@ -167,16 +170,19 @@
           </div>
         </div>
 
-        <!-- Prominent Top Navigation Tabs -->
+        <!-- Prominent Top Navigation Tabs (4 TABS) -->
         <div class="game-top-tabs">
           <button id="nav-btn-game" class="game-nav-tab active" type="button">
-            🎮 Play Arena
+            🎮 1. Arena
+          </button>
+          <button id="nav-btn-scores" class="game-nav-tab" type="button">
+            🏆 2. Scores
           </button>
           <button id="nav-btn-logs" class="game-nav-tab" type="button">
-            📜 Match Logs (<span class="global-logs-badge">0</span>)
+            📜 3. Logs (<span class="global-logs-badge">0</span>)
           </button>
           <button id="nav-btn-bubbles" class="game-nav-tab" type="button">
-            🫧 Used Words Tab (<span id="top-used-words-badge" class="global-used-words-badge">0</span>)
+            🫧 4. Word Bubbles (<span id="top-used-words-badge" class="global-used-words-badge">0</span>)
           </button>
         </div>
 
@@ -236,21 +242,16 @@
                 Hint: Type a word that pairs with the base word!
               </div>
 
-              <!-- Shortcut pills to open Logs & Used Words Bubble Tab -->
-              <div style="display: flex; gap: 8px; margin-top: 4px;">
-                <button id="btn-quick-view-logs" class="btn-quick-bubbles" type="button" style="border-color: #10ac84; background: #e8f8f5; color: #10ac84; flex: 1;">
-                  📜 View Logs (<span class="global-logs-badge">0</span>)
-                </button>
-                <button id="btn-quick-view-bubbles" class="btn-quick-bubbles" type="button" style="flex: 1;">
-                  🫧 Used Words (<span id="quick-used-words-badge" class="global-used-words-badge">0</span>)
-                </button>
-              </div>
+              <!-- Shortcut pill to open 4th Tab: Used Words in Bubbles -->
+              <button id="btn-quick-view-bubbles" class="btn-quick-bubbles" type="button" style="margin-top: 6px; width: 100%; font-size: 0.95rem; padding: 11px;">
+                🫧 4th Tab: View All Used Words in Bubbles at Once (<span id="quick-used-words-badge" class="global-used-words-badge">0</span>)
+              </button>
             </div>
           </div>
 
           <!-- Sidebar: Scoreboard, Logs & Used Words Tabs -->
           <div class="game-sidebar">
-            <!-- Tab Navigation Header -->
+            <!-- Tab Navigation Header (3 sidebar tabs + 4th Tab Bubbles) -->
             <div class="sidebar-tabs-nav">
               <button id="tab-btn-scores" class="sidebar-tab-btn active" type="button">
                 🏆 Scores
@@ -259,7 +260,7 @@
                 📜 Logs <span id="sidebar-logs-badge" class="tab-badge global-logs-badge">0</span>
               </button>
               <button id="tab-btn-bubbles" class="sidebar-tab-btn" type="button">
-                🫧 Used Words <span id="used-words-badge" class="tab-badge global-used-words-badge">0</span>
+                🫧 4th Tab: Word Bubbles <span id="used-words-badge" class="tab-badge global-used-words-badge">0</span>
               </button>
             </div>
 
@@ -333,31 +334,55 @@
           </div>
         </div>
 
-        <!-- Dedicated Full-View Used Words Tab (Shows ONLY the used words in bubbles) -->
+        <!-- Dedicated Full-View Scores Tab (Tab 2) -->
+        <div id="view-scores-tab" class="used-words-tab-view" style="display: none;">
+          <div class="bubble-cloud-box" style="padding: 20px;">
+            <div class="bubble-cloud-header">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <h3 class="section-title" style="margin: 0; font-size: 1.25rem;">🏆 Current Match Standings</h3>
+                <span id="arena-scores-target-hint" style="font-size: 0.85rem; color: var(--muted); font-weight: 600;">Goal: 10 pts</span>
+              </div>
+              <p style="margin: 0 0 14px; font-size: 0.85rem; color: var(--muted);">
+                Live player scores and progress towards the winning goal.
+              </p>
+              <button id="btn-back-to-arena-from-scores" class="btn-chunky btn-green" style="width: 100%; font-size: 0.88rem;" type="button">
+                🎮 Back to Game Arena
+              </button>
+            </div>
+            <div id="arena-scores-rows" class="scoreboard-rows" style="margin-top: 10px;"></div>
+          </div>
+        </div>
+
+        <!-- 4th TAB: ALL USED WORDS IN BUBBLES AT ONCE (Only Used Words) -->
         <div id="view-used-words-tab" class="used-words-tab-view" style="display: none;">
           <div class="bubble-cloud-box" style="padding: 20px;">
             <div class="bubble-cloud-header">
               <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                <h3 class="section-title" style="margin: 0; font-size: 1.25rem;">🫧 Used Words in This Match</h3>
-                <span id="bubbles-count-text" class="bubble-count-pill" style="font-size: 0.85rem; padding: 4px 12px;">0 words played</span>
+                <div>
+                  <h3 class="section-title" style="margin: 0; font-size: 1.3rem;">🫧 4th Tab: Used Words in Bubbles</h3>
+                  <div style="font-size: 0.82rem; color: #2e5bff; font-weight: 700; margin-top: 2px;">
+                    ✨ All used words are displayed simultaneously at once!
+                  </div>
+                </div>
+                <span id="bubbles-count-text" class="bubble-count-pill" style="font-size: 0.9rem; padding: 5px 14px; background: #dff9fb; color: #0984e3; border: 1px solid #70a1ff;">0 words played</span>
               </div>
-              <p style="margin: 0 0 14px; font-size: 0.85rem; color: var(--muted);">
-                These words and compounds have already been played and cannot be repeated.
+              <p style="margin: 6px 0 14px; font-size: 0.85rem; color: var(--muted);">
+                Every single word & compound accepted in this chain is shown below as a bubble. Cannot be reused!
               </p>
-              <div style="display: flex; gap: 10px; margin-bottom: 6px;">
-                <input type="text" id="input-search-bubbles" class="input-bubble-search" placeholder="🔍 Search or filter used word bubbles..." autocomplete="off">
+              <div style="display: flex; gap: 10px; margin-bottom: 8px; flex-wrap: wrap;">
+                <input type="text" id="input-search-bubbles" class="input-bubble-search" style="flex: 1; min-width: 180px;" placeholder="🔍 Filter bubbles or search word..." autocomplete="off">
                 <button id="btn-back-to-arena" class="btn-chunky btn-green" style="min-width: 140px; font-size: 0.88rem;" type="button">
-                  🎮 Back to Game
+                  🎮 Back to Arena
                 </button>
               </div>
             </div>
 
-            <!-- Pure Bubble Cloud: Just the used words in bubbles -->
-            <div id="used-words-bubbles" class="bubbles-playground" style="min-height: 280px; max-height: 480px;">
+            <!-- Pure Bubble Cloud: ALL USED WORDS DISPLAYED AT ONCE -->
+            <div id="used-words-bubbles" class="bubbles-playground bubbles-wall-all" style="min-height: 320px; max-height: 560px;">
               <div class="empty-bubbles-state">
-                <span style="font-size: 2.6rem; display: block; margin-bottom: 8px;">🫧</span>
-                <p style="margin: 0; font-size: 0.95rem; color: var(--muted); font-weight: 600;">No used words yet!</p>
-                <span style="font-size: 0.8rem; color: #a4b0be;">Played words and compounds will bubble up here!</span>
+                <span style="font-size: 2.8rem; display: block; margin-bottom: 8px;">🫧</span>
+                <p style="margin: 0; font-size: 1rem; color: var(--muted); font-weight: 700;">No used words yet!</p>
+                <span style="font-size: 0.82rem; color: #a4b0be; margin-top: 4px;">As players submit valid compound words, ALL accepted words will bubble up here at once!</span>
               </div>
             </div>
           </div>
@@ -394,34 +419,37 @@
       </div>
     </div>
 
-    <!-- 5. UNIVERSAL USED WORDS BUBBLE TAB SCREEN -->
+    <!-- 5. UNIVERSAL 4TH TAB: ALL USED WORDS IN BUBBLES -->
     <div id="screen-used-words" class="screen">
       <div class="game-card used-words-card">
         <div class="bubble-cloud-header">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.5rem;">🫧</span>
-              <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">Used Words Tab</h2>
+              <span style="font-size: 1.6rem;">🫧</span>
+              <div>
+                <h2 class="section-title" style="margin: 0; font-size: 1.35rem;">4th Tab: Word Bubbles</h2>
+                <span style="font-size: 0.8rem; color: #2e5bff; font-weight: 700;">All used words displayed simultaneously at once!</span>
+              </div>
             </div>
-            <span id="global-bubbles-count-text" class="bubble-count-pill" style="font-size: 0.85rem; padding: 4px 12px;">0 words played</span>
+            <span id="global-bubbles-count-text" class="bubble-count-pill" style="font-size: 0.88rem; padding: 5px 14px; background: #dff9fb; color: #0984e3; border: 1px solid #70a1ff;">0 words played</span>
           </div>
           <p style="margin: 0 0 16px; font-size: 0.88rem; color: var(--muted);">
-            All words and compounds played in this session. Words already used cannot be repeated!
+            All accepted words and compounds from this session. Every word is displayed at once as a colorful bubble!
           </p>
           <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-            <input type="text" id="input-global-search-bubbles" class="input-bubble-search" style="flex: 1; min-width: 180px;" placeholder="🔍 Search or filter used words..." autocomplete="off">
+            <input type="text" id="input-global-search-bubbles" class="input-bubble-search" style="flex: 1; min-width: 180px;" placeholder="🔍 Filter or search bubbles..." autocomplete="off">
             <button id="btn-back-from-global-bubbles" class="btn-chunky btn-green" style="min-width: 140px; font-size: 0.9rem;" type="button">
               ⬅️ Back to Game
             </button>
           </div>
         </div>
 
-        <!-- Pure Bubble Cloud: Just the used words in bubbles -->
-        <div id="global-used-words-bubbles" class="bubbles-playground" style="min-height: 280px; max-height: 480px;">
+        <!-- Pure Bubble Cloud: ALL USED WORDS DISPLAYED AT ONCE -->
+        <div id="global-used-words-bubbles" class="bubbles-playground bubbles-wall-all" style="min-height: 320px; max-height: 560px;">
           <div class="empty-bubbles-state">
             <span style="font-size: 2.8rem; display: block; margin-bottom: 8px;">🫧</span>
             <p style="margin: 0; font-size: 1rem; color: var(--muted); font-weight: 700;">No used words yet!</p>
-            <span style="font-size: 0.82rem; color: #a4b0be; margin-top: 4px;">Words and compounds played during the match will float as bubbles here!</span>
+            <span style="font-size: 0.82rem; color: #a4b0be; margin-top: 4px;">Words and compounds played during the match will all bubble up here at once!</span>
           </div>
         </div>
       </div>
@@ -453,13 +481,31 @@
       </div>
     </div>
 
+    <!-- 7. UNIVERSAL MATCH SCORES SCREEN (Tab 2) -->
+    <div id="screen-scores" class="screen">
+      <div class="game-card used-words-card">
+        <div class="bubble-cloud-header">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 1.5rem;">🏆</span>
+              <h2 class="section-title" style="margin: 0; font-size: 1.3rem;">Match Scores & Standings</h2>
+            </div>
+          </div>
+          <button id="btn-back-from-global-scores" class="btn-chunky btn-green" style="width: 100%; font-size: 0.9rem; margin-bottom: 14px;" type="button">
+            ⬅️ Back to Game
+          </button>
+        </div>
+        <div id="global-scores-rows" class="scoreboard-rows"></div>
+      </div>
+    </div>
+
     <!-- Floating reactions container -->
     <div id="reactions-container"></div>
   </div>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/audio.js?v=3.3"></script>
-  <script src="/js/confetti.js?v=3.3"></script>
-  <script src="/js/app.js?v=3.3"></script>
+  <script src="/js/audio.js?v=3.4"></script>
+  <script src="/js/confetti.js?v=3.4"></script>
+  <script src="/js/app.js?v=3.4"></script>
 </body>
 </html>

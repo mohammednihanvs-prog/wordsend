@@ -17,13 +17,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const screenGameover = document.getElementById('screen-gameover');
   const screenUsedWords = document.getElementById('screen-used-words');
   const screenLogs = document.getElementById('screen-logs');
+  const screenScores = document.getElementById('screen-scores');
 
-  // DOM Elements - Universal Global Tabs
+  // DOM Elements - Universal Global Tabs (4 Tabs)
   const globalTabGame = document.getElementById('global-tab-game');
+  const globalTabScores = document.getElementById('global-tab-scores');
   const globalTabLogs = document.getElementById('global-tab-logs');
   const globalTabBubbles = document.getElementById('global-tab-bubbles');
   const btnLobbyViewLogs = document.getElementById('btn-lobby-view-logs');
   const btnLobbyViewBubbles = document.getElementById('btn-lobby-view-bubbles');
+  const btnBackFromGlobalScores = document.getElementById('btn-back-from-global-scores');
   const btnBackFromGlobalLogs = document.getElementById('btn-back-from-global-logs');
   const btnBackFromGlobalBubbles = document.getElementById('btn-back-from-global-bubbles');
   const inputGlobalSearchBubbles = document.getElementById('input-global-search-bubbles');
@@ -31,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalBubblesCountText = document.getElementById('global-bubbles-count-text');
   const globalLogsCountText = document.getElementById('global-logs-count-text');
   const globalHistoryFeed = document.getElementById('global-history-feed');
+  const globalScoresRows = document.getElementById('global-scores-rows');
 
   // DOM Elements - Home
   const inputNickname = document.getElementById('input-nickname');
@@ -52,14 +56,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const lobbyStartHint = document.getElementById('lobby-start-hint');
   const btnMuteLobby = document.getElementById('btn-mute-toggle-lobby');
 
-  // DOM Elements - Primary View Tabs, Match Logs & Used Words Tab
+  // DOM Elements - Primary View Tabs (4 Tabs: Arena, Scores, Logs, Word Bubbles)
   const navBtnGame = document.getElementById('nav-btn-game');
+  const navBtnScores = document.getElementById('nav-btn-scores');
   const navBtnLogs = document.getElementById('nav-btn-logs');
   const navBtnBubbles = document.getElementById('nav-btn-bubbles');
   const viewGameArena = document.getElementById('view-game-arena');
+  const viewScoresTab = document.getElementById('view-scores-tab');
   const viewLogsTab = document.getElementById('view-logs-tab');
   const viewUsedWordsTab = document.getElementById('view-used-words-tab');
   const btnBackToArena = document.getElementById('btn-back-to-arena');
+  const btnBackToArenaFromScores = document.getElementById('btn-back-to-arena-from-scores');
   const btnBackToArenaFromLogs = document.getElementById('btn-back-to-arena-from-logs');
   const btnQuickViewLogs = document.getElementById('btn-quick-view-logs');
   const btnQuickViewBubbles = document.getElementById('btn-quick-view-bubbles');
@@ -67,6 +74,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const quickUsedWordsBadge = document.getElementById('quick-used-words-badge');
   const arenaHistoryFeed = document.getElementById('arena-history-feed');
   const arenaLogsCountText = document.getElementById('arena-logs-count-text');
+  const arenaScoresRows = document.getElementById('arena-scores-rows');
+  const arenaScoresTargetHint = document.getElementById('arena-scores-target-hint');
 
   // DOM Elements - Sidebar Tabs (Scores, Logs, Used Words)
   const tabBtnScores = document.getElementById('tab-btn-scores');
@@ -150,21 +159,22 @@ document.addEventListener('DOMContentLoaded', () => {
   let lastActiveScreen = screenHome;
   function switchScreen(targetScreen) {
     if (!targetScreen) return;
+    if (globalTabGame) globalTabGame.classList.remove('active');
+    if (globalTabScores) globalTabScores.classList.remove('active');
+    if (globalTabLogs) globalTabLogs.classList.remove('active');
+    if (globalTabBubbles) globalTabBubbles.classList.remove('active');
+
     if (targetScreen === screenUsedWords) {
       if (globalTabBubbles) globalTabBubbles.classList.add('active');
-      if (globalTabGame) globalTabGame.classList.remove('active');
-      if (globalTabLogs) globalTabLogs.classList.remove('active');
     } else if (targetScreen === screenLogs) {
       if (globalTabLogs) globalTabLogs.classList.add('active');
-      if (globalTabGame) globalTabGame.classList.remove('active');
-      if (globalTabBubbles) globalTabBubbles.classList.remove('active');
+    } else if (targetScreen === screenScores) {
+      if (globalTabScores) globalTabScores.classList.add('active');
     } else {
       lastActiveScreen = targetScreen;
       if (globalTabGame) globalTabGame.classList.add('active');
-      if (globalTabLogs) globalTabLogs.classList.remove('active');
-      if (globalTabBubbles) globalTabBubbles.classList.remove('active');
     }
-    [screenHome, screenLobby, screenGame, screenGameover, screenUsedWords, screenLogs].forEach(s => {
+    [screenHome, screenLobby, screenGame, screenGameover, screenUsedWords, screenLogs, screenScores].forEach(s => {
       if (s) s.classList.remove('active');
     });
     targetScreen.classList.add('active');
@@ -506,32 +516,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  let cachedPlayersList = [];
+  let cachedActiveTurnId = null;
+  let cachedWinningScore = 10;
+
   // Scoreboard Renderer
   function renderScoreboard(players, activeTurnId, winningScore) {
-    scoreboardRows.innerHTML = '';
-    players.forEach(p => {
-      const isTurn = p.id === activeTurnId;
-      const isMe = p.id === socket.id || (myPlayer && p.id === myPlayer.id);
-      const progressPercent = Math.min(100, Math.max(0, (p.score / winningScore) * 100));
+    if (players) cachedPlayersList = players;
+    if (activeTurnId !== undefined) cachedActiveTurnId = activeTurnId;
+    if (winningScore !== undefined) cachedWinningScore = winningScore;
 
-      const row = document.createElement('div');
-      row.className = `score-row ${isTurn ? 'active-turn' : ''} ${isMe ? 'my-row' : ''}`;
-      row.innerHTML = `
-        <div class="score-row-header">
-          <div class="score-player-info">
-            <div class="player-avatar" style="width: 28px; height: 28px; font-size: .95rem; background: ${p.color};">${p.emoji}</div>
-            <span>${escapeHtml(p.nickname)}</span>
-            ${isMe ? '<span class="badge-you" style="font-size: 0.65rem; padding: 2px 6px;">YOU</span>' : ''}
-            ${isTurn ? '<span style="font-size: 0.7rem; color: #ffa502; font-weight: 700;">⏳ TURN</span>' : ''}
+    const list = cachedPlayersList || [];
+    const goalText = `Goal: ${cachedWinningScore} pts`;
+    if (targetScoreHint) targetScoreHint.textContent = goalText;
+    if (arenaScoresTargetHint) arenaScoresTargetHint.textContent = goalText;
+
+    const populateRows = (container) => {
+      if (!container) return;
+      container.innerHTML = '';
+      if (list.length === 0) {
+        container.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem; text-align: center; padding: 12px;">No players yet.</div>';
+        return;
+      }
+      list.forEach(p => {
+        const isTurn = p.id === cachedActiveTurnId;
+        const isMe = p.id === socket.id || (myPlayer && p.id === myPlayer.id);
+        const progressPercent = Math.min(100, Math.max(0, (p.score / cachedWinningScore) * 100));
+
+        const row = document.createElement('div');
+        row.className = `score-row ${isTurn ? 'active-turn' : ''} ${isMe ? 'my-row' : ''}`;
+        row.innerHTML = `
+          <div class="score-row-header">
+            <div class="score-player-info">
+              <div class="player-avatar" style="width: 28px; height: 28px; font-size: .95rem; background: ${p.color};">${p.emoji}</div>
+              <span>${escapeHtml(p.nickname)}</span>
+              ${isMe ? '<span class="badge-you" style="font-size: 0.65rem; padding: 2px 6px;">YOU</span>' : ''}
+              ${isTurn ? '<span style="font-size: 0.7rem; color: #ffa502; font-weight: 700;">⏳ TURN</span>' : ''}
+            </div>
+            <span class="score-value" style="color: ${p.score >= 0 ? '#2ed573' : '#ff4757'}; font-weight: 700;">${p.score} pts</span>
           </div>
-          <span class="score-value" style="color: ${p.score >= 0 ? '#2ed573' : '#ff4757'}; font-weight: 700;">${p.score} pts</span>
-        </div>
-        <div class="progress-track">
-          <div class="progress-fill" style="width: ${progressPercent}%; background: ${p.color};"></div>
-        </div>
-      `;
-      scoreboardRows.appendChild(row);
-    });
+          <div class="progress-track">
+            <div class="progress-fill" style="width: ${progressPercent}%; background: ${p.color};"></div>
+          </div>
+        `;
+        container.appendChild(row);
+      });
+    };
+
+    populateRows(scoreboardRows);
+    populateRows(arenaScoresRows);
+    populateRows(globalScoresRows);
   }
 
   // Word History Renderer (Match Logs)
@@ -588,21 +622,37 @@ document.addEventListener('DOMContentLoaded', () => {
     populateHistory(globalHistoryFeed);
   }
 
-  // Primary View Navigation (Play Arena vs Match Logs vs Used Words Tab)
+  // Primary View Navigation (4 Tabs: Play Arena vs Standings vs Match Logs vs 4th Tab Word Bubbles)
   function showArenaView() {
     if (navBtnGame) navBtnGame.classList.add('active');
+    if (navBtnScores) navBtnScores.classList.remove('active');
     if (navBtnLogs) navBtnLogs.classList.remove('active');
     if (navBtnBubbles) navBtnBubbles.classList.remove('active');
     if (viewGameArena) viewGameArena.style.display = 'grid';
+    if (viewScoresTab) viewScoresTab.style.display = 'none';
     if (viewLogsTab) viewLogsTab.style.display = 'none';
     if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'none';
+  }
+
+  function showScoresTabView() {
+    if (navBtnScores) navBtnScores.classList.add('active');
+    if (navBtnGame) navBtnGame.classList.remove('active');
+    if (navBtnLogs) navBtnLogs.classList.remove('active');
+    if (navBtnBubbles) navBtnBubbles.classList.remove('active');
+    if (viewGameArena) viewGameArena.style.display = 'none';
+    if (viewScoresTab) viewScoresTab.style.display = 'block';
+    if (viewLogsTab) viewLogsTab.style.display = 'none';
+    if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'none';
+    renderScoreboard();
   }
 
   function showLogsTabView() {
     if (navBtnLogs) navBtnLogs.classList.add('active');
     if (navBtnGame) navBtnGame.classList.remove('active');
+    if (navBtnScores) navBtnScores.classList.remove('active');
     if (navBtnBubbles) navBtnBubbles.classList.remove('active');
     if (viewGameArena) viewGameArena.style.display = 'none';
+    if (viewScoresTab) viewScoresTab.style.display = 'none';
     if (viewLogsTab) viewLogsTab.style.display = 'block';
     if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'none';
     renderWordHistory();
@@ -611,8 +661,10 @@ document.addEventListener('DOMContentLoaded', () => {
   function showUsedWordsTabView() {
     if (navBtnBubbles) navBtnBubbles.classList.add('active');
     if (navBtnGame) navBtnGame.classList.remove('active');
+    if (navBtnScores) navBtnScores.classList.remove('active');
     if (navBtnLogs) navBtnLogs.classList.remove('active');
     if (viewGameArena) viewGameArena.style.display = 'none';
+    if (viewScoresTab) viewScoresTab.style.display = 'none';
     if (viewLogsTab) viewLogsTab.style.display = 'none';
     if (viewUsedWordsTab) viewUsedWordsTab.style.display = 'block';
     renderBubbles(cachedUsedWordsList, inputSearchBubbles ? inputSearchBubbles.value : '');
@@ -621,6 +673,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (navBtnGame) navBtnGame.addEventListener('click', () => {
     window.soundEngine.playClick();
     showArenaView();
+  });
+
+  if (navBtnScores) navBtnScores.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showScoresTabView();
   });
 
   if (navBtnLogs) navBtnLogs.addEventListener('click', () => {
@@ -634,6 +691,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   if (btnBackToArena) btnBackToArena.addEventListener('click', () => {
+    window.soundEngine.playClick();
+    showArenaView();
+  });
+
+  if (btnBackToArenaFromScores) btnBackToArenaFromScores.addEventListener('click', () => {
     window.soundEngine.playClick();
     showArenaView();
   });
@@ -653,7 +715,7 @@ document.addEventListener('DOMContentLoaded', () => {
     showUsedWordsTabView();
   });
 
-  // Sidebar Tab Switching (Scores vs Logs vs Used Words)
+  // Sidebar Tab Switching (Scores vs Logs vs 4th Tab Used Words)
   function showSidebarTab(tabName) {
     if (tabBtnScores) tabBtnScores.classList.toggle('active', tabName === 'scores');
     if (tabBtnLogs) tabBtnLogs.classList.toggle('active', tabName === 'logs');
@@ -681,7 +743,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderBubbles();
   });
 
-  // Global Tabs & Lobby Quick View (Game Arena vs Match Logs vs Used Words)
+  // Global Tabs & Lobby Quick View (4 Tabs: Arena, Scores, Logs, Word Bubbles)
   if (globalTabGame) {
     globalTabGame.addEventListener('click', () => {
       window.soundEngine.playClick();
@@ -689,6 +751,14 @@ document.addEventListener('DOMContentLoaded', () => {
       if (lastActiveScreen === screenGame) {
         showArenaView();
       }
+    });
+  }
+
+  if (globalTabScores) {
+    globalTabScores.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(screenScores);
+      renderScoreboard();
     });
   }
 
@@ -721,6 +791,13 @@ document.addEventListener('DOMContentLoaded', () => {
       window.soundEngine.playClick();
       switchScreen(screenUsedWords);
       renderBubbles();
+    });
+  }
+
+  if (btnBackFromGlobalScores) {
+    btnBackFromGlobalScores.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(lastActiveScreen || screenHome);
     });
   }
 
@@ -773,18 +850,24 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
       let matchCount = 0;
+      const isFullView = container === usedWordsBubbles || container === globalUsedWordsBubbles;
       sorted.forEach((word, idx) => {
         const isMatch = term ? word.toLowerCase().includes(term) : true;
         if (!isMatch) return;
         matchCount++;
 
         const bubble = document.createElement('div');
-        bubble.className = `word-bubble word-bubble-${idx % 8}`;
+        bubble.className = `${isFullView ? 'word-bubble-large' : 'word-bubble'} word-bubble-${idx % 8}`;
         if (term && word.toLowerCase().includes(term)) {
           bubble.classList.add('highlight-match');
         }
         bubble.innerHTML = `<span>🫧</span><span>${escapeHtml(word)}</span>`;
-        bubble.title = `Played word: "${word}"`;
+        bubble.title = `Used word: "${word}" (Click to pop)`;
+        bubble.addEventListener('click', () => {
+          if (window.soundEngine) window.soundEngine.playClick();
+          bubble.classList.add('highlight-match');
+          setTimeout(() => bubble.classList.remove('highlight-match'), 600);
+        });
         container.appendChild(bubble);
       });
 

@@ -128,16 +128,16 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opa
 .score-toast { position: absolute; font-size: 2.6rem; font-weight: 700; white-space: nowrap; text-shadow: 0 3px 10px rgba(0,0,0,.18); }
 .score-toast-correct { color: #36ab79; } .score-toast-incorrect { color: #89938b; } .score-toast-skip { color: var(--coral); }
 /* Game Top Tabs (Prominent Header Tabs) */
-.app-global-nav { display: flex; justify-content: center; gap: 8px; width: 100%; max-width: 540px; margin: 0 auto 16px; background: #edf0e6; padding: 6px; border-radius: 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
-.global-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 18px; border: none; border-radius: 14px; background: transparent; color: var(--muted); font: 700 0.92rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.app-global-nav { display: flex; justify-content: center; gap: 6px; width: 100%; max-width: 620px; margin: 0 auto 16px; background: #edf0e6; padding: 5px; border-radius: 18px; box-shadow: 0 4px 14px rgba(0,0,0,0.06); }
+.global-tab-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 10px; border: none; border-radius: 14px; background: transparent; color: var(--muted); font: 700 0.84rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; }
 .global-tab-btn.active { background: #fff; color: #3742fa; box-shadow: 0 4px 12px rgba(55,66,250,0.15); transform: translateY(-1px); }
 .global-tab-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.5); color: var(--ink); }
 .global-used-words-badge { background: #3742fa; color: #fff; font: 700 0.72rem 'DM Mono', monospace; padding: 2px 7px; border-radius: 20px; }
 .global-logs-badge { background: #10ac84; color: #fff; font: 700 0.72rem 'DM Mono', monospace; padding: 2px 7px; border-radius: 20px; }
 .used-words-card { max-width: 680px; margin: 0 auto; }
 
-.game-top-tabs { display: flex; gap: 8px; margin-bottom: 16px; background: #edf0e6; padding: 5px; border-radius: 16px; }
-.game-nav-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border: none; border-radius: 12px; background: transparent; color: var(--muted); font: 700 0.92rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+.game-top-tabs { display: flex; gap: 6px; margin-bottom: 16px; background: #edf0e6; padding: 5px; border-radius: 16px; }
+.game-nav-tab { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 10px; border: none; border-radius: 12px; background: transparent; color: var(--muted); font: 700 0.84rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275); white-space: nowrap; }
 .game-nav-tab.active { background: #fff; color: #3742fa; box-shadow: 0 4px 10px rgba(0,0,0,0.06); }
 .btn-quick-bubbles { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 9px 14px; border-radius: 14px; border: 2px dashed #70a1ff; background: #f0f5ff; color: #2e5bff; font: 700 0.85rem 'Plus Jakarta Sans', sans-serif; cursor: pointer; transition: transform 0.18s, background 0.18s; margin-top: 4px; }
 .btn-quick-bubbles:hover { transform: translateY(-2px); background: #e4edff; }

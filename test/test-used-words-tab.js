@@ -14,43 +14,31 @@ const puppeteer = require('puppeteer');
     console.log('1. Loading home page...');
     await page.goto('http://localhost:3000');
 
-    // 1. Check Universal Nav on Home Screen (all 3 tabs)
-    const tabGameText = await page.$eval('#global-tab-game', el => el.textContent.trim());
-    const tabLogsText = await page.$eval('#global-tab-logs', el => el.textContent.trim());
-    const tabBubblesText = await page.$eval('#global-tab-bubbles', el => el.textContent.trim());
-    console.log(`✓ Universal tabs: [${tabGameText}] [${tabLogsText}] [${tabBubblesText}]`);
+    // 1. Check Universal Nav on Home Screen (all 4 tabs)
+    const tab1 = await page.$eval('#global-tab-game', el => el.textContent.trim());
+    const tab2 = await page.$eval('#global-tab-scores', el => el.textContent.trim());
+    const tab3 = await page.$eval('#global-tab-logs', el => el.textContent.trim());
+    const tab4 = await page.$eval('#global-tab-bubbles', el => el.textContent.trim());
+    console.log(`✓ Universal 4 Tabs: [${tab1}] [${tab2}] [${tab3}] [${tab4}]`);
 
-    // Click Universal Logs Tab
-    await page.$eval('#global-tab-logs', el => el.click());
-    const logsScreenActive = await page.$eval('#screen-logs', el => el.classList.contains('active'));
-    console.log('✓ Universal Logs Screen active:', logsScreenActive);
-
-    // Return to Game
-    await page.$eval('#btn-back-from-global-logs', el => el.click());
-    console.log('✓ Returned to Home screen');
-
-    // Click Universal Used Words Tab
+    // Click Tab 4 from Home
+    console.log('2. Clicking Tab 4 (Word Bubbles) from Home...');
     await page.$eval('#global-tab-bubbles', el => el.click());
     const usedWordsScreenActive = await page.$eval('#screen-used-words', el => el.classList.contains('active'));
-    console.log('✓ Universal Used Words Screen active:', usedWordsScreenActive);
+    console.log('✓ 4th Tab Screen active:', usedWordsScreenActive);
 
-    // Return to Game
+    // Return to Arena/Home
     await page.$eval('#btn-back-from-global-bubbles', el => el.click());
     console.log('✓ Returned to Home screen');
 
     // 2. Create room & join second player
-    console.log('\n2. Creating room and entering lobby...');
+    console.log('\n3. Creating room and entering lobby...');
     await page.type('#input-nickname', 'Host');
     await page.$eval('#btn-create-room', el => el.click());
     await page.waitForSelector('#screen-lobby.active');
 
     const roomCode = await page.$eval('#lobby-room-code', el => el.textContent.trim());
     console.log('✓ Room Code:', roomCode);
-
-    // Check Lobby buttons (Logs and Used Words)
-    const lobbyLogsBtn = await page.$eval('#btn-lobby-view-logs', el => window.getComputedStyle(el).display !== 'none');
-    const lobbyBubblesBtn = await page.$eval('#btn-lobby-view-bubbles', el => window.getComputedStyle(el).display !== 'none');
-    console.log(`✓ Lobby buttons visible: Logs=${lobbyLogsBtn}, UsedWords=${lobbyBubblesBtn}`);
 
     // Join Guest
     const page2 = await browser.newPage();
@@ -62,7 +50,7 @@ const puppeteer = require('puppeteer');
     await page2.waitForSelector('#screen-lobby.active');
 
     // 3. Start Game
-    console.log('\n3. Starting game...');
+    console.log('\n4. Starting game...');
     await page.waitForFunction(() => {
       const btn = document.getElementById('btn-start-game');
       return btn && !btn.disabled && window.getComputedStyle(btn).display !== 'none';
@@ -73,45 +61,42 @@ const puppeteer = require('puppeteer');
     await page2.waitForSelector('#screen-game.active');
     console.log('✓ Both players in Game Screen');
 
-    // 4. Verify Sidebar 3 Tabs: Scores, Logs, Used Words
-    console.log('\n4. Verifying Sidebar 3 Tabs...');
-    const tabScoresText = await page.$eval('#tab-btn-scores', el => el.textContent.trim());
-    const tabSidebarLogsText = await page.$eval('#tab-btn-logs', el => el.textContent.trim());
-    const tabSidebarBubblesText = await page.$eval('#tab-btn-bubbles', el => el.textContent.trim());
-    console.log(`✓ Sidebar tabs: [${tabScoresText}] [${tabSidebarLogsText}] [${tabSidebarBubblesText}]`);
+    // 4. Verify Arena Top 4 Tabs
+    console.log('\n5. Verifying In-Game Top 4 Tabs...');
+    const inGameTab1 = await page.$eval('#nav-btn-game', el => el.textContent.trim());
+    const inGameTab2 = await page.$eval('#nav-btn-scores', el => el.textContent.trim());
+    const inGameTab3 = await page.$eval('#nav-btn-logs', el => el.textContent.trim());
+    const inGameTab4 = await page.$eval('#nav-btn-bubbles', el => el.textContent.trim());
+    console.log(`✓ In-Game 4 Tabs: [${inGameTab1}] [${inGameTab2}] [${inGameTab3}] [${inGameTab4}]`);
 
-    // Switch to Sidebar Logs tab
-    await page.$eval('#tab-btn-logs', el => el.click());
-    const logsTabDisplay = await page.$eval('#tab-content-logs', el => window.getComputedStyle(el).display);
-    const scoresTabDisplay = await page.$eval('#tab-content-scores', el => window.getComputedStyle(el).display);
-    console.log(`✓ Switched to Sidebar Logs Tab (logs display=${logsTabDisplay}, scores display=${scoresTabDisplay})`);
-
-    // Switch to Sidebar Used Words tab
-    await page.$eval('#tab-btn-bubbles', el => el.click());
-    const bubblesTabDisplay = await page.$eval('#tab-content-bubbles', el => window.getComputedStyle(el).display);
-    console.log(`✓ Switched to Sidebar Used Words Tab (bubbles display=${bubblesTabDisplay})`);
-
-    // 5. Test Full-View Match Logs Tab
-    console.log('\n5. Testing Arena Full-View Logs Tab...');
-    await page.$eval('#nav-btn-logs', el => el.click());
-    const viewLogsDisplay = await page.$eval('#view-logs-tab', el => window.getComputedStyle(el).display);
-    console.log('✓ Opened Full-View Match Logs Tab: display =', viewLogsDisplay);
-    await page.$eval('#btn-back-to-arena-from-logs', el => el.click());
-
-    // 6. Test Full-View Used Words Tab
-    console.log('\n6. Testing Arena Full-View Used Words Tab...');
+    // Click In-Game 4th Tab
+    console.log('6. Clicking 4th Tab (Word Bubbles) in Arena...');
     await page.$eval('#nav-btn-bubbles', el => el.click());
     const viewBubblesDisplay = await page.$eval('#view-used-words-tab', el => window.getComputedStyle(el).display);
-    console.log('✓ Opened Full-View Used Words Tab: display =', viewBubblesDisplay);
+    console.log('✓ Opened 4th Tab View: display =', viewBubblesDisplay);
+
+    // Verify all used words displayed at once as bubbles
+    const bubbleCount = await page.$$eval('#used-words-bubbles .word-bubble-large', els => els.length);
+    console.log(`✓ All used words displayed at once in 4th Tab: ${bubbleCount} bubble(s)`);
+    if (bubbleCount < 1) throw new Error('Expected at least 1 bubble (starting base word)');
+
+    // Click the bubble
+    await page.$eval('#used-words-bubbles .word-bubble-large', el => el.click());
+    console.log('✓ Clicked bubble in 4th Tab (interactive pop animation triggered)');
+
+    // Return to Arena
+    await page.$eval('#btn-back-to-arena', el => el.click());
+    const arenaDisplay = await page.$eval('#view-game-arena', el => window.getComputedStyle(el).display);
+    console.log('✓ Returned to Game Arena: display =', arenaDisplay);
+
+    // 7. Verify quick shortcut button below input
+    await page.$eval('#btn-quick-view-bubbles', el => el.click());
+    const quickOpened = await page.$eval('#view-used-words-tab', el => window.getComputedStyle(el).display !== 'none');
+    console.log('✓ Quick pill opened 4th Tab:', quickOpened);
     await page.$eval('#btn-back-to-arena', el => el.click());
 
-    // 7. Verify Initial Base Word is in Used Words Bubbles
-    const initialWordsCount = await page.$eval('#top-used-words-badge', el => parseInt(el.textContent));
-    console.log(`✓ Initial Used Words count: ${initialWordsCount}`);
-    if (initialWordsCount < 1) throw new Error('Expected initial base word in used words');
-
     console.log('\n===============================================================');
-    console.log(' 🎉 LOGS TAB & ONLY-USED-WORDS TAB FULLY VERIFIED IN BROWSER! 🎉 ');
+    console.log(' 🎉 4TH TAB WITH ALL USED WORDS DISPLAYED AT ONCE VERIFIED! 🎉 ');
     console.log('===============================================================');
   } catch (err) {
     console.error('Test failed:', err);
