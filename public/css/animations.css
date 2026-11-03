@@ -1,0 +1,187 @@
+/* Dynamic Animations: Flips, Pops, Floaters, and Pulses */
+
+/* Big Base Word Card Pop / Flip Animation */
+@keyframes cardPop {
+  0% {
+    transform: scale(0.7) rotate(-4deg);
+    opacity: 0.2;
+  }
+  50% {
+    transform: scale(1.08) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.animate-card-pop {
+  animation: cardPop 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+/* Floating Toast: +1 Sparkles */
+@keyframes floatGreenScore {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 20px) scale(0.6);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1.25);
+  }
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -60px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -90px) scale(0.9);
+  }
+}
+
+.float-score-correct {
+  animation: floatGreenScore 1.4s ease-out forwards;
+}
+
+/* Floating Toast: 0 Shake (Grey) */
+@keyframes shakeZeroScore {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 10px) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -10px) scale(1.1);
+  }
+  30%, 50%, 70% {
+    transform: translate(calc(-50% - 10px), -25px) rotate(-6deg);
+  }
+  40%, 60%, 80% {
+    transform: translate(calc(-50% + 10px), -25px) rotate(6deg);
+  }
+  90% {
+    opacity: 1;
+    transform: translate(-50%, -50px) scale(0.95);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -75px) scale(0.8);
+  }
+}
+
+.float-score-incorrect {
+  animation: shakeZeroScore 1.5s ease-in-out forwards;
+}
+
+/* Floating Toast: -1 Wobble (Red) */
+@keyframes wobbleMinusScore {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -15px) scale(1.2);
+  }
+  40% {
+    transform: translate(-50%, -30px) rotate(-10deg);
+  }
+  60% {
+    transform: translate(-50%, -45px) rotate(8deg);
+  }
+  85% {
+    opacity: 1;
+    transform: translate(-50%, -60px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -85px) scale(0.85);
+  }
+}
+
+.float-score-skip {
+  animation: wobbleMinusScore 1.5s ease-out forwards;
+}
+
+/* Timer Pulse for final 3 seconds */
+@keyframes timerUrgentPulse {
+  0% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px rgba(235, 77, 75, 0.4));
+  }
+  50% {
+    transform: scale(1.14);
+    filter: drop-shadow(0 0 16px rgba(235, 77, 75, 0.9));
+  }
+  100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 4px rgba(235, 77, 75, 0.4));
+  }
+}
+
+.timer-pulsing {
+  animation: timerUrgentPulse 0.6s infinite ease-in-out;
+}
+
+/* Floating Emoji Reactions */
+@keyframes reactionBubble {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.5);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0) scale(1.3);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-90px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-140px) scale(0.7);
+  }
+}
+
+.floating-reaction {
+  animation: reactionBubble 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+
+/* Typing indicator dots bounce */
+@keyframes typingBounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-6px);
+  }
+}
+
+.typing-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  margin: 0 1px;
+}
+.typing-dot:nth-child(1) { animation: typingBounce 1.2s infinite ease-in-out 0s; }
+.typing-dot:nth-child(2) { animation: typingBounce 1.2s infinite ease-in-out 0.2s; }
+.typing-dot:nth-child(3) { animation: typingBounce 1.2s infinite ease-in-out 0.4s; }
+
+/* Subtle Winner Trophy Glow */
+@keyframes trophyGlow {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    filter: drop-shadow(0 0 15px rgba(254, 202, 87, 0.7));
+  }
+  50% {
+    transform: scale(1.08) rotate(3deg);
+    filter: drop-shadow(0 0 30px rgba(255, 159, 67, 1));
+  }
+}
+
+.trophy-glow {
+  animation: trophyGlow 2.2s infinite ease-in-out;
+}

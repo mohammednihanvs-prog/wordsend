@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Wordsend | Real-Time Word Chain Game</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/animations.css">
+</head>
+<body>
+  <div id="app">
+    <!-- SYSTEM BANNER FOR NOTIFICATIONS / ANTI-STALL -->
+    <div id="system-banner" class="system-banner" style="display: none;"></div>
+
+    <!-- 1. HOME SCREEN -->
+    <div id="screen-home" class="screen active">
+      <div class="home-container">
+        <h1 class="game-logo">⚡ WORDSEND</h1>
+        <p class="game-tagline">The fast-paced multiplayer word chain battle!</p>
+
+        <div class="game-card">
+          <div class="form-group">
+            <label for="input-nickname">Your Nickname</label>
+            <input type="text" id="input-nickname" class="input-chunky" placeholder="Enter nickname..." maxlength="14" autocomplete="off">
+          </div>
+
+          <button id="btn-create-room" class="btn-chunky btn-primary" style="width: 100%;">
+            🎮 Create New Room
+          </button>
+
+          <div class="home-divider">
+            <span>OR JOIN A ROOM</span>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 12px;">
+            <input type="text" id="input-room-code" class="input-chunky" placeholder="4-Letter Code (e.g. WORD)" maxlength="4" style="text-transform: uppercase; text-align: center; letter-spacing: 3px;">
+          </div>
+
+          <button id="btn-join-room" class="btn-chunky btn-purple" style="width: 100%;">
+            🚀 Join Room
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. LOBBY SCREEN -->
+    <div id="screen-lobby" class="screen">
+      <div class="game-card">
+        <div class="lobby-header">
+          <div>
+            <span style="font-size: 0.9rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Room Code</span>
+            <div class="room-code-badge">
+              <span id="lobby-room-code" class="code-text">----</span>
+              <button id="btn-copy-code" class="btn-icon" title="Copy Room Code">📋 Copy</button>
+            </div>
+          </div>
+          <button id="btn-mute-toggle-lobby" class="btn-icon" title="Toggle Sound">🔊 Sound: ON</button>
+        </div>
+
+        <div class="lobby-grid">
+          <!-- Players Column -->
+          <div>
+            <h3 class="section-title">
+              <span>👥 Players</span>
+              <span id="lobby-player-count" style="font-size: 0.95rem; color: var(--text-muted);">(0/8)</span>
+            </h3>
+            <div id="lobby-players-list" class="players-list">
+              <!-- Player pills rendered dynamically -->
+            </div>
+          </div>
+
+          <!-- Settings Column -->
+          <div>
+            <h3 class="section-title">⚙️ Game Rules</h3>
+            <div class="settings-box">
+              <!-- Winning Score -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <span>Winning Score</span>
+                  <span id="label-winning-score" class="setting-val">10 pts</span>
+                </div>
+                <input type="range" id="slider-winning-score" class="slider-chunky" min="3" max="50" value="10">
+              </div>
+
+              <!-- Turn Timer -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <span>Turn Timer</span>
+                  <span id="label-turn-timer" class="setting-val">10s</span>
+                </div>
+                <input type="range" id="slider-turn-timer" class="slider-chunky" min="5" max="30" value="10">
+              </div>
+
+              <!-- Chain Mode -->
+              <div class="setting-item">
+                <div class="setting-header">
+                  <span>Word Chain Mode</span>
+                </div>
+                <select id="select-chain-mode" class="select-chunky">
+                  <option value="compound">Compound Words (e.g. base ➔ ball = baseball)</option>
+                  <option value="shiritori">First/Last Letter (e.g. base ➔ elephant)</option>
+                  <option value="any">Free Dictionary (Any unused English word)</option>
+                </select>
+              </div>
+
+              <div id="lobby-non-host-notice" style="display: none; font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                🔒 Only the room host can change game settings.
+              </div>
+            </div>
+
+            <div style="margin-top: 20px;">
+              <button id="btn-start-game" class="btn-chunky btn-green" style="width: 100%;">
+                ▶️ Start Game
+              </button>
+              <p id="lobby-start-hint" style="font-size: 0.85rem; color: var(--text-muted); text-align: center; margin-top: 8px;">
+                Waiting for host to start (min 2 players)...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. GAME SCREEN -->
+    <div id="screen-game" class="screen">
+      <div class="game-card">
+        <!-- Top Utility Bar -->
+        <div class="game-top-bar">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-weight: 700; color: var(--text-muted);">ROOM:</span>
+            <span id="game-room-code" style="font-weight: 700; color: #3742fa; letter-spacing: 1px;">----</span>
+            <button id="btn-mute-toggle-game" class="btn-icon">🔊</button>
+          </div>
+
+          <!-- Quick Emoji Reactions -->
+          <div class="reactions-bar">
+            <button class="btn-reaction" data-emoji="🔥">🔥</button>
+            <button class="btn-reaction" data-emoji="😂">😂</button>
+            <button class="btn-reaction" data-emoji="😱">😱</button>
+            <button class="btn-reaction" data-emoji="👏">👏</button>
+          </div>
+        </div>
+
+        <div class="game-layout">
+          <!-- Main Arena (Center) -->
+          <div class="game-main-arena">
+            <!-- Active Turn Banner -->
+            <div id="turn-banner" class="turn-banner">
+              <span id="turn-emoji">⏳</span>
+              <span id="turn-text">Waiting for game...</span>
+              <span id="typing-indicator" style="display: none; margin-left: 6px;">
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+                <span class="typing-dot"></span>
+              </span>
+            </div>
+
+            <!-- Big Base Word Card -->
+            <div id="base-word-card" class="base-word-card animate-card-pop">
+              <div class="base-word-label">CURRENT BASE WORD</div>
+              <div id="base-word-text" class="base-word-text">BASE</div>
+            </div>
+
+            <!-- Circular SVG Countdown Timer -->
+            <div id="timer-container" class="timer-container">
+              <svg class="timer-svg" viewBox="0 0 100 100">
+                <circle class="timer-circle-bg" cx="50" cy="50" r="42"></circle>
+                <circle id="timer-circle-progress" class="timer-circle-progress" cx="50" cy="50" r="42" stroke="#2ed573" stroke-dasharray="263.89" stroke-dashoffset="0"></circle>
+              </svg>
+              <div id="timer-number" class="timer-number">10</div>
+            </div>
+
+            <!-- Floating score toasts container -->
+            <div id="floaters-container"></div>
+
+            <!-- Word Input & Controls -->
+            <div class="word-input-container">
+              <form id="form-word-submit" class="input-row" autocomplete="off" onsubmit="return false;">
+                <input type="text" id="input-game-word" class="input-chunky input-word" placeholder="Type a word..." maxlength="24" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+                <button type="submit" id="btn-submit-word" class="btn-chunky btn-green">
+                  Send
+                </button>
+              </form>
+
+              <!-- Skip Button (Visible only on player's turn) -->
+              <button id="btn-skip-turn" class="btn-chunky btn-skip" style="width: 100%;">
+                ⏩ Skip Turn (-1 pt)
+              </button>
+
+              <div id="game-mode-hint" class="hint-text">
+                Hint: Type a word that pairs with the base word!
+              </div>
+            </div>
+          </div>
+
+          <!-- Sidebar (Scoreboard & Word History) -->
+          <div class="game-sidebar">
+            <!-- Scoreboard -->
+            <div class="scoreboard-box">
+              <h4 class="section-title" style="margin-bottom: 8px;">🏆 Leaderboard</h4>
+              <div id="scoreboard-rows" class="scoreboard-rows">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+
+            <!-- Word Feed / Chain History -->
+            <div class="history-box">
+              <h4 class="section-title" style="margin-bottom: 8px;">📜 Word History</h4>
+              <div id="history-feed" class="history-feed">
+                <!-- Dynamically populated -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. GAME OVER SCREEN -->
+    <div id="screen-gameover" class="screen">
+      <div class="game-card gameover-container">
+        <h2 style="font-size: 1.3rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px;">
+          GAME OVER!
+        </h2>
+
+        <div class="winner-avatar-wrap">
+          <div class="winner-crown">👑</div>
+          <div id="winner-avatar" class="winner-avatar trophy-glow" style="background: #ffeaa7;">🦁</div>
+        </div>
+
+        <div id="winner-name" class="winner-title">Player</div>
+        <div id="winner-score" class="winner-score">Reached 10 points!</div>
+
+        <div class="scoreboard-box" style="margin-bottom: 24px;">
+          <h4 class="section-title">Final Standings</h4>
+          <div id="gameover-leaderboard" class="scoreboard-rows"></div>
+        </div>
+
+        <button id="btn-play-again" class="btn-chunky btn-green" style="width: 100%; display: none;">
+          🔄 Play Again (Host)
+        </button>
+        <p id="gameover-wait-hint" style="color: var(--text-muted); font-size: 0.95rem; margin-top: 10px;">
+          Waiting for room host to return to lobby...
+        </p>
+      </div>
+    </div>
+
+    <!-- Floating reactions container -->
+    <div id="reactions-container"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/audio.js"></script>
+  <script src="/js/confetti.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
