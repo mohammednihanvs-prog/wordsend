@@ -15,6 +15,16 @@ document.addEventListener('DOMContentLoaded', () => {
   const screenLobby = document.getElementById('screen-lobby');
   const screenGame = document.getElementById('screen-game');
   const screenGameover = document.getElementById('screen-gameover');
+  const screenUsedWords = document.getElementById('screen-used-words');
+
+  // DOM Elements - Universal Global Tabs
+  const globalTabGame = document.getElementById('global-tab-game');
+  const globalTabBubbles = document.getElementById('global-tab-bubbles');
+  const btnLobbyViewBubbles = document.getElementById('btn-lobby-view-bubbles');
+  const btnBackFromGlobalBubbles = document.getElementById('btn-back-from-global-bubbles');
+  const inputGlobalSearchBubbles = document.getElementById('input-global-search-bubbles');
+  const globalUsedWordsBubbles = document.getElementById('global-used-words-bubbles');
+  const globalBubblesCountText = document.getElementById('global-bubbles-count-text');
 
   // DOM Elements - Home
   const inputNickname = document.getElementById('input-nickname');
@@ -122,8 +132,20 @@ document.addEventListener('DOMContentLoaded', () => {
   syncAudioUI();
 
   // Navigation Helper
+  let lastActiveScreen = screenHome;
   function switchScreen(targetScreen) {
-    [screenHome, screenLobby, screenGame, screenGameover].forEach(s => s.classList.remove('active'));
+    if (!targetScreen) return;
+    if (targetScreen !== screenUsedWords) {
+      lastActiveScreen = targetScreen;
+      if (globalTabGame) globalTabGame.classList.add('active');
+      if (globalTabBubbles) globalTabBubbles.classList.remove('active');
+    } else {
+      if (globalTabBubbles) globalTabBubbles.classList.add('active');
+      if (globalTabGame) globalTabGame.classList.remove('active');
+    }
+    [screenHome, screenLobby, screenGame, screenGameover, screenUsedWords].forEach(s => {
+      if (s) s.classList.remove('active');
+    });
     targetScreen.classList.add('active');
   }
 
@@ -582,6 +604,40 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Global Tabs & Lobby Quick View Bubbles
+  if (globalTabGame) {
+    globalTabGame.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(lastActiveScreen || screenHome);
+      if (lastActiveScreen === screenGame) {
+        showArenaView();
+      }
+    });
+  }
+
+  if (globalTabBubbles) {
+    globalTabBubbles.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(screenUsedWords);
+      renderBubbles();
+    });
+  }
+
+  if (btnLobbyViewBubbles) {
+    btnLobbyViewBubbles.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(screenUsedWords);
+      renderBubbles();
+    });
+  }
+
+  if (btnBackFromGlobalBubbles) {
+    btnBackFromGlobalBubbles.addEventListener('click', () => {
+      window.soundEngine.playClick();
+      switchScreen(lastActiveScreen || screenHome);
+    });
+  }
+
   // Used Words Bubbles Rendering & Search
   let cachedUsedWordsList = [];
 
@@ -590,10 +646,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const list = cachedUsedWordsList || [];
 
     const countText = `${list.length} word${list.length === 1 ? '' : 's'}`;
+    document.querySelectorAll('.global-used-words-badge').forEach(el => {
+      el.textContent = list.length;
+    });
     if (topUsedWordsBadge) topUsedWordsBadge.textContent = list.length;
     if (quickUsedWordsBadge) quickUsedWordsBadge.textContent = list.length;
     if (usedWordsBadge) usedWordsBadge.textContent = list.length;
     if (bubblesCountText) bubblesCountText.textContent = countText;
+    if (globalBubblesCountText) globalBubblesCountText.textContent = countText;
     if (sidebarBubblesCount) sidebarBubblesCount.textContent = countText;
 
     const term = (searchTerm || '').trim().toLowerCase();
@@ -634,12 +694,18 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     populateContainer(usedWordsBubbles);
+    populateContainer(globalUsedWordsBubbles);
     populateContainer(sidebarUsedWordsBubbles);
   }
 
   if (inputSearchBubbles) {
     inputSearchBubbles.addEventListener('input', () => {
       renderBubbles(null, inputSearchBubbles.value);
+    });
+  }
+  if (inputGlobalSearchBubbles) {
+    inputGlobalSearchBubbles.addEventListener('input', () => {
+      renderBubbles(null, inputGlobalSearchBubbles.value);
     });
   }
   if (inputSidebarSearchBubbles) {
